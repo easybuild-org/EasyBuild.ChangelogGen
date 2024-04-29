@@ -1,0 +1,1 @@
+# EasyBuild.ChangelogGen
