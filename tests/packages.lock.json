@@ -1,0 +1,135 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net6.0": {
+      "Fable.Pyxpecto": {
+        "type": "Direct",
+        "requested": "[1.1.0, )",
+        "resolved": "1.1.0",
+        "contentHash": "bxZIaCe5kC+wf56iugyiRdiXk3cOG+jZEqoUUEIapl6OjMk2xhD6Px5i6fYPio/zah6secpu/odyL7WUutx0jg==",
+        "dependencies": {
+          "FSharp.Core": "5.0.0",
+          "Fable.Core": "4.1.0",
+          "Fable.Python": "4.3.0"
+        }
+      },
+      "FSharp.Core": {
+        "type": "Direct",
+        "requested": "[8.0.101, )",
+        "resolved": "8.0.101",
+        "contentHash": "sOLz3O4BOxnTKfd5OChdRmDUy4Id0GfoEClRG4nzIod8LY1LJZcNyygKAV0A78XOLh8yvhA5hsDYKZXGCR9blw=="
+      },
+      "Fable.Core": {
+        "type": "Transitive",
+        "resolved": "4.1.0",
+        "contentHash": "NISAbAVGEcvH2s+vHLSOCzh98xMYx4aIadWacQdWPcQLploxpSQXLEe9SeszUBhbHa73KMiKREsH4/W3q4A4iA=="
+      },
+      "Fable.Package.SDK": {
+        "type": "Transitive",
+        "resolved": "0.1.0",
+        "contentHash": "wrEcGovUimN0PRGgVHlX/gsqCm5d/p9eOG74iaHoteX2dsFZQ9P7d066LRAl5Gj7GUHy7azLyDE41KFvZx1v9A=="
+      },
+      "Fable.Python": {
+        "type": "Transitive",
+        "resolved": "4.3.0",
+        "contentHash": "KT5PI4NyMtVLDcmDkf5SeqwtFjVO17u27xr45qXfYWG12UePHxGjQJoI16OafIzlEQ6cHfAuRljhZGKIlvOJNQ==",
+        "dependencies": {
+          "FSharp.Core": "4.7.2",
+          "Fable.Core": "[4.1.0, 5.0.0)"
+        }
+      },
+      "FsToolkit.ErrorHandling": {
+        "type": "Transitive",
+        "resolved": "4.15.1",
+        "contentHash": "zf8o4N954UWhkVQd2tc1u65sjSxZJ8WGprZJcfh1Hmp4OfXcTEnKX0DjMY2yET+BzvsLKembgGq9HBChFYeTlQ==",
+        "dependencies": {
+          "FSharp.Core": "7.0.300"
+        }
+      },
+      "LibGit2Sharp.NativeBinaries": {
+        "type": "Transitive",
+        "resolved": "2.0.322",
+        "contentHash": "EWQaEevzc8uS1ZGS6T83jqUPBY//2WUSCHwbZHBoHOjlfSehqr30nm/VAhJPzjam/69sv7nlLKVcho9t2XuR/Q=="
+      },
+      "Newtonsoft.Json": {
+        "type": "Transitive",
+        "resolved": "13.0.1",
+        "contentHash": "ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A=="
+      },
+      "Spectre.Console": {
+        "type": "Transitive",
+        "resolved": "0.49.0",
+        "contentHash": "1s+hhYq5fcrqCvZhrNOPehAmCZJM6cjro85g1Qirvmm1tys+/sfFJgePCGcxr+S/nONZ/lCDTflPda3C+WlBdg=="
+      },
+      "Thoth.Json.Core": {
+        "type": "Transitive",
+        "resolved": "0.3.0",
+        "contentHash": "6JNLVfP7ne16TvgKXpmhQru1VwXs5QGdQ6YZNdAL84e11MvxJFXKlcbNSNRw3dOI3yruYz0OKvpCRaHpV6JGcA==",
+        "dependencies": {
+          "FSharp.Core": "5.0.0",
+          "Fable.Core": "4.1.0",
+          "Fable.Package.SDK": "0.1.0"
+        }
+      },
+      "easybuild.changeloggen": {
+        "type": "Project",
+        "dependencies": {
+          "EasyBuild.CommitParser": "[1.0.0, )",
+          "FSharp.Core": "[8.0.101, )",
+          "LibGit2Sharp": "[0.30.0, )",
+          "Semver": "[2.3.0, )",
+          "Spectre.Console.Cli": "[0.49.0, )",
+          "Thoth.Json.Newtonsoft": "[0.2.0, )"
+        }
+      },
+      "EasyBuild.CommitParser": {
+        "type": "CentralTransitive",
+        "requested": "[1.0.0, )",
+        "resolved": "1.0.0",
+        "contentHash": "PSsqV5/9YXJUBNRtc+H6NgZ68UrRFAuKpUUFP41eg0YI7z//NGbwAz7D6kI4mlzY1Xd6JD2brb3gzlyR4qFuMA==",
+        "dependencies": {
+          "FSharp.Core": "8.0.101",
+          "FsToolkit.ErrorHandling": "4.15.1",
+          "Thoth.Json.Newtonsoft": "0.1.0"
+        }
+      },
+      "LibGit2Sharp": {
+        "type": "CentralTransitive",
+        "requested": "[0.30.0, )",
+        "resolved": "0.30.0",
+        "contentHash": "1cBg/7nz6q+yzvComhqQaTS4nbXloLp/x29ZgY/Rr82ohpkuaWT8ZYzsPLFvs1zmCh/4xQbVt5sQxazGblgRig==",
+        "dependencies": {
+          "LibGit2Sharp.NativeBinaries": "[2.0.322]"
+        }
+      },
+      "Semver": {
+        "type": "CentralTransitive",
+        "requested": "[2.3.0, )",
+        "resolved": "2.3.0",
+        "contentHash": "4vYo1zqn6pJ1YrhjuhuOSbIIm0CpM47grbpTJ5ABjOlfGt/EhMEM9ed4MRK5Jr6gVnntWDqOUzGeUJp68PZGjw=="
+      },
+      "Spectre.Console.Cli": {
+        "type": "CentralTransitive",
+        "requested": "[0.49.0, )",
+        "resolved": "0.49.0",
+        "contentHash": "841g7PhuJFwoCatKKVoIRDaylmcaTxEzTzq7+rGHyVCBUqL7iOH0c5AsGnjgBMzhRDnUUWkP47Ho9WWfqMVqAA==",
+        "dependencies": {
+          "Spectre.Console": "0.49.0"
+        }
+      },
+      "Thoth.Json.Newtonsoft": {
+        "type": "CentralTransitive",
+        "requested": "[0.2.0, )",
+        "resolved": "0.2.0",
+        "contentHash": "dMQOT6TJftO97c8gHWFegfSw/0/E+VdhGaSkf3e1Ba+DjrAESLA9HMlYyE30x7nhn7w5SfH1WO9YyzSRTV4Ysg==",
+        "dependencies": {
+          "FSharp.Core": "5.0.0",
+          "Fable.Core": "4.1.0",
+          "Fable.Package.SDK": "0.1.0",
+          "Newtonsoft.Json": "13.0.1",
+          "Thoth.Json.Core": "0.3.0"
+        }
+      }
+    }
+  }
+}

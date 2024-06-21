@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <!-- <RollForward>Major</RollForward>
+        <PackAsTool>true</PackAsTool> -->
+        <!-- <ToolCommandName>commit-linter</ToolCommandName> -->
+    </PropertyGroup>
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+            <_Parameter1>EasyBuild.ChangelogGen.Tests</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="Log.fs" />
+        <Compile Include="Commands/Generate.fs" />
+        <Compile Include="Commands/Version.fs" />
+        <Compile Include="Parser.fs" />
+        <Compile Include="Changelog.fs" />
+        <Compile Include="Main.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="EasyBuild.CommitParser" />
+        <PackageReference Include="LibGit2Sharp" />
+        <PackageReference Include="Semver" />
+        <PackageReference Include="Spectre.Console.Cli" />
+        <PackageReference Include="Thoth.Json.Newtonsoft" />
+    </ItemGroup>
+
+</Project>
