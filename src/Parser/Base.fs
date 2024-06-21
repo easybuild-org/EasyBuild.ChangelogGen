@@ -1,9 +1,6 @@
-module Parser
+module Parser.Base
 
-open System
-open Fable.Core
-open Fable.Core.JsInterop
-open System.Text
+open Parser.LowLevel
 
 // Implementation notes:
 // Row start at 1, column start at 1
@@ -35,6 +32,13 @@ type LocatedContext<'Context> =
         Context: 'Context
     }
 
+    static member inline Create (row: int) (column: int) (context: 'Context) =
+        {
+            Row = row
+            Column = column
+            Context = context
+        }
+
 type State<'Context> =
     {
         Source: string
@@ -44,6 +48,16 @@ type State<'Context> =
         Row: int
         Column: int
     }
+
+    static member inline Initial (source: string) =
+        {
+            Source = source
+            Offset = 0
+            Indent = 0
+            Context = []
+            Row = 1
+            Column = 1
+        }
 
 type DeadEnd<'Context, 'Problem> =
     {
@@ -108,6 +122,9 @@ type ParserStep<'Context, 'Problem, 'Value> =
 
 type Parser<'Context, 'Problem, 'Value> =
     | Parser of (State<'Context> -> ParserStep<'Context, 'Problem, 'Value>)
+
+type Token<'T> = Token of string * 'T
+
 
 let rec bagToList
     (bag: Bag<'Context, 'Problem>)
@@ -275,13 +292,18 @@ let lazy' (thunk: unit -> Parser<'Context, 'Problem, 'Value>) : Parser<'Context,
         let (Parser parse) = thunk ()
         parse state
 
-let rec internal oneOfApply
+let rec private oneOfApply
     (state: State<'Context>)
     (bag: Bag<'Context, 'Problem>)
     (parsers: Parser<'Context, 'Problem, 'Value> list)
     =
     match parsers with
-    | [] -> ParserStep.Failed { Backtrackable = false; Bag = bag }
+    | [] ->
+        ParserStep.Failed
+            {
+                Backtrackable = false
+                Bag = bag
+            }
     | Parser parse :: rest ->
         match parse state with
         | ParserStep.Success step -> ParserStep.Success step
@@ -294,14 +316,14 @@ let rec internal oneOfApply
 let oneOf (parsers: Parser<'Context, 'Problem, 'Value> list) : Parser<'Context, 'Problem, 'Value> =
     Parser <| fun state -> oneOfApply state Empty parsers
 
-type Step<'State, 'Value> =
+type LoopStep<'State, 'Value> =
     | Loop of 'State
     | Done of 'Value
 
-let rec internal loopApply
+let rec private loopApply
     (backtrackable: bool)
     (state: 'State)
-    (func: 'State -> Parser<'Context, 'Problem, (Step<'State, 'Value>)>)
+    (func: 'State -> Parser<'Context, 'Problem, (LoopStep<'State, 'Value>)>)
     (state0: State<'Context>)
     : ParserStep<'Context, 'Problem, 'Value>
     =
@@ -358,268 +380,236 @@ let commit (value: 'Value) : Parser<'Context, 'Problem, 'Value> =
                 State = state
             }
 
-type Token<'T> = Token of string * 'T
 
-// let isSubString (smallString: string) (offset: int) (row: int) (col: int) (bigString: string) =
-//     let smallLength = smallString.Length
-//     let mutable isGood = offset + smallLength <= bigString.Length
-//     let mutable i = 0
-//     let mutable offset = offset
-//     let mutable row = row
-//     let mutable col = col
+let getPosition<'Context, 'Problem> : Parser<'Context, 'Problem, Position> =
+    Parser
+    <| fun state ->
+        ParserStep.Success
+            {
+                Backtrackable = false
+                Value =
+                    {
+                        Row = state.Row
+                        Column = state.Column
+                    }
+                State = state
+            }
 
-//     while (isGood && i < smallLength) do
-//         let code = charCodeAt bigString offset
-//         // Increment counters
-//         i <- i + 1
-//         offset <- offset + 1
-//         let condA = smallString[i] = bigString[offset]
-//         let isNewLine = code = 0x000A
-//         let x =
-//             if isNewLine then
-//                 (row + 1, 1)
-//             else
+let getRow<'Context, 'Problem> : Parser<'Context, 'Problem, int> =
+    Parser
+    <| fun state ->
+        ParserStep.Success
+            {
+                Backtrackable = false
+                Value = state.Row
+                State = state
+            }
 
-//         isGood <-
+let getColumn<'Context, 'Problem> : Parser<'Context, 'Problem, int> =
+    Parser
+    <| fun state ->
+        ParserStep.Success
+            {
+                Backtrackable = false
+                Value = state.Column
+                State = state
+            }
 
-//     ()
+let getOffset<'Context, 'Problem> : Parser<'Context, 'Problem, int> =
+    Parser
+    <| fun state ->
+        ParserStep.Success
+            {
+                Backtrackable = false
+                Value = state.Offset
+                State = state
+            }
 
-//
+let getSource<'Context, 'Problem> : Parser<'Context, 'Problem, string> =
+    Parser
+    <| fun state ->
+        ParserStep.Success
+            {
+                Backtrackable = false
+                Value = state.Source
+                State = state
+            }
 
-// let rec loop i =
-//     if not isGood || i >= smallLength then
-//         (if isGood then offset else (-1, row, col))
-//     else
-//         let code = int (bigString.[offset])
-//         let isGood' =
-//             smallString.[i] = bigString.[offset] &&
-//             (
-//                 if code = 0x000A then
-//                     row + 1, 1
-//                 else
-//                     col + 1, if (code &&& 0xF800) = 0xD800 then
-//                                 i + 1
-//                                 offset + 1
-//                             else
-//                                 i
-//                                 offset
-//             )
-//         loop (i + 1) isGood' row col
+let getIndent<'Context, 'Problem> : Parser<'Context, 'Problem, int> =
+    Parser
+    <| fun state ->
+        ParserStep.Success
+            {
+                Backtrackable = false
+                Value = state.Indent
+                State = state
+            }
 
-// loop 0
+let changeIndent (newIndent: int) (state: State<'Context>) : State<'Context> =
+    { state with Indent = newIndent }
 
-// let token (Token (str, expecting) : Token<'Problem>) : Parser<'Context, 'Problem, unit> =
-//     let progress =
-//         str <> ""
+let withIndent
+    (newIndent: int)
+    (Parser parse: Parser<'Context, 'Problem, 'Value>)
+    : Parser<'Context, 'Problem, 'Value>
+    =
+    Parser
+    <| fun state ->
+        match parse (changeIndent newIndent state) with
+        | ParserStep.Success step ->
+            ParserStep.Success
+                {
+                    Backtrackable = step.Backtrackable
+                    Value = step.Value
+                    State = changeIndent state.Indent step.State
+                }
 
-//     Parser
-//     <| fun state ->
-//         let
+        | ParserStep.Failed _ as failedStep -> failedStep
 
-// let symbol (x : Token<'Problem>) : Parser<'Context, 'Problem, unit> =
-//     Token x
+let changeContext
+    (newContext: LocatedContext<'Context> list)
+    (state: State<'Context>)
+    : State<'Context>
+    =
+    { state with Context = newContext }
 
-let inline private isTwoBytesUtf16Characters (charCode: int) =
-    // Is this the right way to detect UTF-16 characters that take 2 bytes?
-    charCode >= 0xD800 && charCode <= 0xDBFF
+let inContext
+    (context: 'Context)
+    (Parser parse: Parser<'Context, 'Problem, 'Value>)
+    : Parser<'Context, 'Problem, 'Value>
+    =
+    Parser
+    <| fun state ->
+        match
+            parse (
+                changeContext
+                    (LocatedContext.Create state.Row state.Column context :: state.Context)
+                    state
+            )
+        with
+        | ParserStep.Success step ->
+            ParserStep.Success
+                {
+                    Backtrackable = step.Backtrackable
+                    Value = step.Value
+                    State = changeContext state.Context step.State
+                }
 
-// let bytes = Encoding.Unicode.GetBytes(string code)
-// Array.length bytes = 2 && bytes.[1] = 255uy
+        | ParserStep.Failed _ as failedStep -> failedStep
 
-// // https://learn.microsoft.com/en-us/dotnet/api/system.text.encoding.getpreamble?view=net-8.0
-// let rune = char.EnumerateRunes()
+let eatUntil (Token(str, expecting) : Token<'Problem>) : Parser<'Context, 'Problem, unit> =
+    Parser
+    <| fun state ->
+        let result = findSubString str state.Offset state.Row state.Column state.Source
 
-// rune.Current.Utf16SequenceLength = 2
+        match result with
+        | SubStringResult.NoMatch result ->
+            ParserStep.Failed
+                {
+                    Backtrackable = false
+                    Bag = fromInfo result.Row result.Column expecting state.Context
+                }
 
-type CursorPosition =
-    {
-        Offset: int
-        Row: int
-        Column: int
-    }
+        | SubStringResult.Match result ->
+            ParserStep.Success
+                {
+                    Backtrackable = (state.Offset < result.Offset)
+                    Value = ()
+                    State =
+                        { state with
+                            Offset = result.Offset
+                            Row = result.Row
+                            Column = result.Column
+                        }
+                }
 
-    static member inline Create (offset: int) (row: int) (col: int) =
-        {
-            Offset = offset
-            Row = row
-            Column = col
-        }
+let eatIf (isGood : string -> bool) (expecting : 'Problem) : Parser<'Context, 'Problem, unit> =
+    Parser
+    <| fun state ->
+        let newOffset = charMatchAt isGood state.Offset state.Source
 
+        match newOffset with
+        | CharMatchAtResult.NoMatch ->
+            ParserStep.Failed
+                {
+                    Backtrackable = false
+                    Bag = fromState state expecting
+                }
 
-[<Struct>]
-[<RequireQualifiedAccess>]
-type SubStringResult =
-    | NoMatch
-    | Match of CursorPosition
+        | CharMatchAtResult.NewLine ->
+            ParserStep.Success
+                {
+                    Backtrackable = true
+                    Value = ()
+                    State =
+                        { state with
+                            Offset = state.Offset + 1
+                            Row = state.Row + 1
+                            Column = 1
+                        }
+                }
 
-/// <summary>
-/// Find a substring after a given offset.
-/// </summary>
-/// <param name="searchedString">The string to search for</param>
-/// <param name="offset">The offset to start searching from</param>
-/// <param name="row">Initial row</param>
-/// <param name="col">Initial column</param>
-/// <param name="text">The text to search in</param>
-/// <returns>
-/// The returned <c>column</c> is the column right after the found substring.
-/// The returned <c>row</c> is the row where the found substring is.
-///
-/// For <c>findSubString "42" 0 1 1 "42 is the answer!"</c> the result is <c>{ Offset = 0; Row = 1; Column = 3 }</c>.
-/// For <c>findSubString "answer!" 0 1 1 "42 is the answer!"</c> the result is <c>{ Offset = 10; Row = 1; Column = 18 }</c>.
-/// </returns>
-let findSubString (searchedString: string) (offset: int) (row: int) (col: int) (text: string) : SubStringResult =
-    let newOffset = text.IndexOf(searchedString, offset)
+        | CharMatchAtResult.Match newOffset ->
+            ParserStep.Success
+                {
+                    Backtrackable = true
+                    Value = ()
+                    State =
+                        { state with
+                            Offset = newOffset
+                            Column = state.Column + 1
+                        }
+                }
 
-    let target =
-        if newOffset = -1 then
-            text.Length
-        else
-            newOffset + searchedString.Length
-
-    if newOffset = -1 then
-        SubStringResult.NoMatch
-    else
-        // Memory
-        let mutable offset = offset
-        let mutable row = row
-        let mutable col = col
-
-        let newText = text.Substring(offset)
-        let mutable iterator = newText.EnumerateRunes()
-
-        while offset < target do
-            let rune = iterator.Current
-            offset <- offset + 1
-
-            if rune.Value = 10 then // '\n'
-                row <- row + 1
-                col <- 2
-            else if rune.Utf16SequenceLength <> 2 then
-                col <- col + 1
-
-            iterator.MoveNext() |> ignore
-
-        SubStringResult.Match (CursorPosition.Create newOffset row col)
-
-
-/// <summary>
-/// Checks if the character at the specified offset in the text is an ASCII character
-/// and equals the given character code.
-/// </summary>
-/// <param name="charCode">The character code to compare.</param>
-/// <param name="offset">The offset of the character in the text.</param>
-/// <param name="text">The text to check.</param>
-/// <returns>
-/// True if the character at the specified offset in the text is an ASCII character
-/// and the character code matches the ASCII code of the character at the specified offset in the text, otherwise false.
-/// </returns>
-let isAsciiCode (charCode: int) (offset: int) (text: string) =
-    let charText = text.[offset]
-
-    (string charText).EnumerateRunes().Current.IsAscii && charCode = int charText
-
-// Is using a DUs Struct a good idea?
-// In general, others parsers use `int` directly but this hurts readability of the code.
-// By using, a DU Struct I hope to make the code more readable and still keep the performance.
-[<Struct>]
-[<RequireQualifiedAccessAttribute>]
-type CharMatchAtResult =
-    /// <summary>
-    /// The character at the specified offset in the text did not match the character code.
-    /// </summary>
-    | NoMatch
-    /// <summary>
-    /// The character at the specified offset in the text matched the character code
-    /// and was a new line character.
-    /// </summary>
-    | NewLine
-    /// <summary>
-    /// The character at the specified offset in the text matched the character code
-    /// </summary>
-    | Match of int
-
-/// <summary>
-/// Checks if the character at the specified offset in the text matches the given predicate.
-///
-/// Important: We are using <c>string -> bool</c> instead of <c>char -> bool</c> otherwise we
-/// can't work with UTF-16 characters / emojis.
-///
-/// In the future, we should probably use <c>Rune</c> instead of <c>string</c>.
-/// But Fable, doesn't support <c>Rune</c> yet.
-/// </summary>
-/// <param name="predicate">The predicate to check if the character matches.</param>
-/// <param name="offset">The offset of the character in the text.</param>
-/// <param name="text">The text to check.</param>
-/// <returns>
-/// - <c>NoMatch</c> if the character at the specified offset in the text did not match the character code.
-/// - <c>NewLine</c> if the character at the specified offset in the text matched the character code and was a new line character.
-/// - <c>Match newOffset</c> if the character at the specified offset in the text matched the character code.
-///
-///     The <c>newOffset</c> is the offset of the next character in the text.
-///
-///     It is <c>offset + 1</c> if the character is encoded on 1 byte in UTF-16 and <c>offset + 2</c> if the character is encoded on 2 bytes in UTF-16.
-/// </returns>
-let charMatchAt (predicate : string -> bool) (offset: int) (text: string) =
-    if text.Length <= offset then
-        CharMatchAtResult.NoMatch
-    else
-        let runeChar = Rune.GetRuneAt(text, offset)
-        let charText = runeChar.ToString()
-
-        if runeChar.Utf16SequenceLength = 2 then
-            if predicate charText then
-                CharMatchAtResult.Match (offset + 2)
-            else
-                CharMatchAtResult.NoMatch
-        else
-            if predicate charText then
-                if runeChar.Value = 10 then
-                    CharMatchAtResult.NewLine
-                else
-                    CharMatchAtResult.Match (offset + 1)
-            else
-                CharMatchAtResult.NoMatch
-
-[<Struct>]
-[<RequireQualifiedAccess>]
-type IsSubStringAtResult =
-    | NoMatch
-    | Match of CursorPosition
-
-let isSubStringAt
-    (searchedString: string)
+let rec private eatWhileApply
+    (isGood : string -> bool)
     (offset: int)
     (row: int)
     (col: int)
-    (text: string) =
+    (state: State<'Context>) : ParserStep<'Context, 'Problem, unit> =
 
-    let searchedStringLength = searchedString.Length
+    let newOffset = charMatchAt isGood offset state.Source
 
-    // Memory
-    let mutable isGood = offset + searchedStringLength <= text.Length
-    // Lookup index in the searched string
-    let mutable i = 0
-    // Lookup offset position in the text
-    let mutable offset = offset
-    let mutable row = row
-    let mutable col = col
+    match newOffset with
+    | CharMatchAtResult.NoMatch ->
+        ParserStep.Success
+            {
+                Backtrackable = (state.Offset < offset)
+                Value = ()
+                State =
+                    {
+                        state with
+                            Offset = offset
+                            Row = row
+                            Column = col
+                    }
+            }
+    | CharMatchAtResult.NewLine ->
+        eatWhileApply isGood (offset + 1) (row + 1) 1 state
 
-    while isGood && i < searchedStringLength do
-        let rune = Rune.GetRuneAt(text, offset)
+    | CharMatchAtResult.Match newOffset ->
+        eatWhileApply isGood newOffset row (col + 1) state
 
-        if rune.Value = 10 then // '\n'
-            row <- row + 1
-            col <- 1
+let eatWhile (isGood : string -> bool) : Parser<'Context, 'Problem, unit> =
+    Parser
+    <| fun state ->
+        eatWhileApply isGood state.Offset state.Row state.Column state
+
+let exhausted (problem: 'Problem) : Parser<'Context, 'Problem, unit> =
+    Parser
+    <| fun state ->
+        if state.Source.Length = state.Offset then
+            ParserStep.Success
+                {
+                    Backtrackable = false
+                    Value = ()
+                    State = state
+                }
         else
-            col <- col + 1
+            ParserStep.Failed
+                {
+                    Backtrackable = false
+                    Bag = fromState state problem
+                }
 
-        isGood <- Rune.GetRuneAt(searchedString, i) = rune
-
-        if isGood then
-            i <- i + rune.Utf16SequenceLength
-            offset <- offset + rune.Utf16SequenceLength
-
-    if isGood then
-        IsSubStringAtResult.Match (CursorPosition.Create offset row col)
-    else
-        IsSubStringAtResult.NoMatch
+let ``end`` = exhausted

@@ -15,6 +15,8 @@ fsharp_multiline_bracket_style = aligned
 fsharp_keep_max_number_of_blank_lines = 1
 fsharp_align_function_signature_to_indentation = true
 fsharp_max_if_then_else_short_width = 0
+fsharp_record_multiline_formatter = number_of_items
+fsharp_array_or_list_multiline_formatter = number_of_items
 
 [demo/**/*.{fs,fsx}]
 fsharp_experimental_elmish = true

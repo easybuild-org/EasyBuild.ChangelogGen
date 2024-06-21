@@ -5,7 +5,11 @@ open EasyBuild.ChangelogGen
 open EasyBuild.ChangelogGen.Changelog
 open Semver
 open System
-
+open Parser.LowLevel
+open Parser.Simple
+open Parser.Base
+open System.Text
+open System.Linq
 // [<Test>]
 // let ``Empty FablePackageType property should report an error`` () =
 //     let content =
@@ -94,100 +98,96 @@ let all =
                     testCase
                         "works when the searched string is at the beginning"
                         (fun () ->
-                            let actual = Parser.findSubString "42" 0 1 1 "42 is the answer!"
+                            let actual = findSubString "42" 0 1 1 "42 is the answer!"
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 0 1 3 |> Parser.SubStringResult.Match
+                                CursorPosition.Create 2 1 3 |> SubStringResult.Match
                             )
                         )
 
                     testCase
                         "works when the searched string is at the end"
                         (fun () ->
-                            let actual = Parser.findSubString "answer!" 0 1 1 "42 is the answer!"
+                            let actual = findSubString "answer!" 0 1 1 "42 is the answer!"
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 10 1 18
-                                |> Parser.SubStringResult.Match
+                                CursorPosition.Create 17 1 18 |> SubStringResult.Match
                             )
                         )
 
                     testCase
                         "works when the searched string is in the middle"
                         (fun () ->
-                            let actual = Parser.findSubString "is" 0 1 1 "42 is the answer!"
+                            let actual = findSubString "is" 0 1 1 "42 is the answer!"
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 3 1 6 |> Parser.SubStringResult.Match
+                                CursorPosition.Create 5 1 6 |> SubStringResult.Match
                             )
                         )
 
                     testCase
                         "works when the searched string is at the beginning of a new line"
                         (fun () ->
-                            let actual = Parser.findSubString "42" 0 1 1 "Is \n\n\n42\nthe answer?"
+                            let actual = findSubString "42" 0 1 1 "Is \n\n\n42\nthe answer?"
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 6 4 3 |> Parser.SubStringResult.Match
+                                CursorPosition.Create 8 4 3 |> SubStringResult.Match
                             )
                         )
 
                     testCase
-                        "make sure the same column is returned relativy to row positio"
+                        "make sure the same column is returned relativy to row position"
                         (fun () ->
-                            let actual = Parser.findSubString "42" 0 1 1 "Is 42 the answer?"
+                            let actual = findSubString "42" 0 1 1 "Is 42 the answer?"
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 3 1 6 |> Parser.SubStringResult.Match
+                                CursorPosition.Create 5 1 6 |> SubStringResult.Match
                             )
 
-                            let actual = Parser.findSubString "42" 0 1 1 "\nIs 42 the answer?"
+                            let actual = findSubString "42" 0 1 1 "\nIs 42 the answer?"
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 4 2 6 |> Parser.SubStringResult.Match
+                                CursorPosition.Create 6 2 6 |> SubStringResult.Match
                             )
                         )
 
                     testCase
                         "works with unicode taking 2 bytes"
                         (fun () ->
-                            let actual = Parser.findSubString "👍" 0 1 1 "Great 👍"
+                            let actual = findSubString "👍" 0 1 1 "Great 👍"
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 6 1 8 |> Parser.SubStringResult.Match
+                                CursorPosition.Create 8 1 8 |> SubStringResult.Match
                             )
 
-                            let actual = Parser.findSubString "👍" 0 1 1 "This is a 👍 great emoji"
+                            let actual = findSubString "👍" 0 1 1 "This is a 👍 great emoji"
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 10 1 12
-                                |> Parser.SubStringResult.Match
+                                CursorPosition.Create 12 1 12 |> SubStringResult.Match
                             )
 
-                            let actual =
-                                Parser.findSubString "👍" 0 1 1 "🚀 This is a 👍 great emoji"
+                            let actual = findSubString "👍" 0 1 1 "🚀 This is a 👍 great emoji"
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 13 1 14
-                                |> Parser.SubStringResult.Match
+                                CursorPosition.Create 15 1 14 |> SubStringResult.Match
                             )
                         )
 
                     testCase
                         "returns NoMatch if the searched string is not found"
                         (fun () ->
-                            let actual = Parser.findSubString "42" 0 1 1 "Is the answer?"
+                            let actual = findSubString "42" 0 1 1 "Is the answer?"
 
-                            Assert.equal (actual, Parser.SubStringResult.NoMatch)
+                            Assert.equal (actual, Position.Create 1 15 |> SubStringResult.NoMatch)
                         )
                 ]
 
@@ -198,15 +198,15 @@ let all =
                     testCase
                         "works with ascii code"
                         (fun () ->
-                            let actual = Parser.isAsciiCode 97 4 "xxxxa"
+                            let actual = isAsciiCode 97 4 "xxxxa"
 
                             Assert.equal (actual, true)
 
-                            let actual = Parser.isAsciiCode 97 0 "a"
+                            let actual = isAsciiCode 97 0 "a"
 
                             Assert.equal (actual, true)
 
-                            let actual = Parser.isAsciiCode 125 4 "xxxx}"
+                            let actual = isAsciiCode 125 4 "xxxx}"
 
                             Assert.equal (actual, true)
                         )
@@ -214,7 +214,7 @@ let all =
                     testCase
                         "returns false if the character is not an ascii code"
                         (fun () ->
-                            let actual = Parser.isAsciiCode 97 4 "xxxx👍"
+                            let actual = isAsciiCode 97 4 "xxxx👍"
 
                             Assert.equal (actual, false)
                         )
@@ -222,7 +222,7 @@ let all =
                     testCase
                         "returns false if the character is different from the ascii code"
                         (fun () ->
-                            let actual = Parser.isAsciiCode 97 4 "xxxxb"
+                            let actual = isAsciiCode 97 4 "xxxxb"
 
                             Assert.equal (actual, false)
                         )
@@ -236,25 +236,25 @@ let all =
                     testCase
                         "returns NoMatch if offset is out of bounds"
                         (fun () ->
-                            let actual = Parser.charMatchAt (fun _ -> true) 10 "abc"
+                            let actual = charMatchAt (fun _ -> true) 10 "abc"
 
-                            Assert.equal (actual, Parser.CharMatchAtResult.NoMatch)
+                            Assert.equal (actual, CharMatchAtResult.NoMatch)
                         )
 
                     testCase
                         "returns 'offset + 1' if the character matches and is encoded on 1 bytes in UTF-16"
                         (fun () ->
-                            let actual = Parser.charMatchAt (fun c -> c = "a") 0 "abc"
+                            let actual = charMatchAt (fun c -> c = "a") 0 "abc"
 
-                            Assert.equal (actual, Parser.CharMatchAtResult.Match 1)
+                            Assert.equal (actual, CharMatchAtResult.Match 1)
                         )
 
                     testCase
                         "returns 'offset + 2' if the character matches and is encoded on 2 bytes in UTF-16"
                         (fun () ->
-                            let actual = Parser.charMatchAt (fun c -> c = "👍") 0 "👍abc"
+                            let actual = charMatchAt (fun c -> c = "👍") 0 "👍abc"
 
-                            Assert.equal (actual, Parser.CharMatchAtResult.Match 2)
+                            Assert.equal (actual, CharMatchAtResult.Match 2)
                         )
                 ]
 
@@ -264,80 +264,373 @@ let all =
                     testCase
                         "works when the searched string is at the beginning"
                         (fun () ->
-                            let actual = Parser.isSubStringAt "let" 0 1 1 "let x = 42"
+                            let actual = isSubStringAt "let" 0 1 1 "let x = 42"
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 3 1 4
-                                |> Parser.IsSubStringAtResult.Match
+                                CursorPosition.Create 3 1 4 |> IsSubStringAtResult.Match
                             )
                         )
 
                     testCase
                         "works when the searched string is at the end"
                         (fun () ->
-                            let actual = Parser.isSubStringAt "42" 8 1 1 "let x = 42"
+                            let actual = isSubStringAt "42" 8 1 1 "let x = 42"
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 10 1 3
-                                |> Parser.IsSubStringAtResult.Match
+                                CursorPosition.Create 10 1 3 |> IsSubStringAtResult.Match
                             )
                         )
 
-                    testCase "works when searching in string with 2 bytes unicode character"
+                    testCase
+                        "works when searching in string with 2 bytes unicode character"
                         (fun () ->
-                            let actual = Parser.isSubStringAt "Great 👍" 9 1 1 "let x = \"Great 👍 work\""
+                            let actual = isSubStringAt "Great 👍" 9 1 1 "let x = \"Great 👍 work\""
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 17 1 8
-                                |> Parser.IsSubStringAtResult.Match
+                                CursorPosition.Create 17 1 8 |> IsSubStringAtResult.Match
                             )
                         )
 
-                    testCase "works for search for a 2 bytes unicode character"
+                    testCase
+                        "works for search for a 2 bytes unicode character"
                         (fun () ->
-                            let actual = Parser.isSubStringAt "👍" 15 1 1 "let x = \"Great 👍 work\""
+                            let actual = isSubStringAt "👍" 15 1 1 "let x = \"Great 👍 work\""
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 17 1 2
-                                |> Parser.IsSubStringAtResult.Match
+                                CursorPosition.Create 17 1 2 |> IsSubStringAtResult.Match
                             )
                         )
 
-                    testCase "works for search for a 2 bytes unicode character at the end"
+                    testCase
+                        "works for search for a 2 bytes unicode character at the end"
                         (fun () ->
-                            let actual = Parser.isSubStringAt "👍" 8 1 1 "let x = 👍"
+                            let actual = isSubStringAt "👍" 8 1 1 "let x = 👍"
 
                             Assert.equal (
                                 actual,
-                                Parser.CursorPosition.Create 10 1 2
-                                |> Parser.IsSubStringAtResult.Match
+                                CursorPosition.Create 10 1 2 |> IsSubStringAtResult.Match
                             )
                         )
 
-                    testCase "returns no match if the searched string is not found at the given offset"
+                    testCase
+                        "returns no match if the searched string is not found at the given offset"
                         (fun () ->
-                            let actual = Parser.isSubStringAt "42" 0 1 1 "let x = 42"
+                            let actual = isSubStringAt "42" 0 1 1 "let x = 42"
 
-                            Assert.equal (
-                                actual,
-                                Parser.IsSubStringAtResult.NoMatch
-                            )
+                            Assert.equal (actual, IsSubStringAtResult.NoMatch)
                         )
 
                     testCase
                         "returns NoMatch is the searched string is not found (overflows at the end)"
                         (fun () ->
-                            let actual = Parser.isSubStringAt "42;" 8 1 1 "let x = 42"
+                            let actual = isSubStringAt "42;" 8 1 1 "let x = 42"
+
+                            Assert.equal (actual, IsSubStringAtResult.NoMatch)
+                        )
+
+                ]
+
+            testList "eatBase10" [
+
+                test "works with a single digit" {
+                    let actual = eatBase10 0 "0"
+
+                    Assert.equal (actual, 1)
+                }
+
+                test "supports all the digits" {
+                    let actual = eatBase10 0 "0123456789"
+
+                    Assert.equal (actual, 10)
+                }
+
+                test "stops at the first non digit character" {
+                    let actual = eatBase10 0 "0123a456789"
+
+                    Assert.equal (actual, 4)
+                }
+
+            ]
+
+            testList
+                "eatUntil"
+                [
+
+                    testCase
+                        "return Ok if the searched string is found"
+                        (fun () ->
+                            let token = toToken "*)"
+                            let actual = run (eatUntil token) "(* this is a comment *)"
+
+                            Assert.equal (actual, Ok())
+                        )
+
+                    testCase
+                        "return an Error if the searched token is not found"
+                        (fun () ->
+                            let token = toToken "*)"
+                            let actual = run (eatUntil token) "(* this is a comment"
 
                             Assert.equal (
                                 actual,
-                                Parser.IsSubStringAtResult.NoMatch
+                                [
+                                    {
+                                        Row = 1
+                                        Column = 21
+                                        Problem = Problem.Expecting "*)"
+                                        ContextStack = []
+                                    }
+                                ]
+                                |> Error
                             )
                         )
+                ]
+
+            testList
+                "eatIf"
+                [
+
+                    testCase
+                        "return Ok if the parser succeeds"
+                        (fun () ->
+                            let parser =
+                                eatIf (fun c -> c.ToLowerInvariant() = c) Problem.UnexpectedChar
+
+                            let actual = run parser "a"
+
+                            Assert.equal (actual, Ok())
+                        )
+
+                    testCase
+                        "return an Error if the parser fails"
+                        (fun () ->
+                            let parser =
+                                eatIf (fun c -> c.ToLowerInvariant() = c) Problem.UnexpectedChar
+
+                            let actual = run parser "A"
+
+                            Assert.equal (
+                                actual,
+                                [
+                                    {
+                                        Row = 1
+                                        Column = 1
+                                        Problem = Problem.UnexpectedChar
+                                        ContextStack = []
+                                    }
+                                ]
+                                |> Error
+                            )
+                        )
+
+                    testCase
+                        "new line is handled correctly"
+                        (fun () ->
+                            let (Parser parse) = eatIf (fun c -> c = "\n") Problem.UnexpectedChar
+
+                            let actual = parse (State.Initial<obj> "\nSecondLine")
+
+                            Assert.equal (
+                                actual,
+                                ParserStep.Success
+                                    {
+                                        Backtrackable = true
+                                        Value = ()
+                                        State =
+                                            {
+                                                Source = "\nSecondLine"
+                                                Offset = 1
+                                                Indent = 0
+                                                Context = []
+                                                Row = 2
+                                                Column = 1
+                                            }
+                                    }
+                            )
+                        )
+                ]
+
+            testList
+                "eatWhile"
+                [
+
+                    testCase
+                        "eat until the predicate fails"
+                        (fun () ->
+                            let (Parser parse) = eatWhile (fun c -> c.ToLowerInvariant() = c)
+
+                            let actual = parse (State.Initial<obj> "abcB")
+
+                            Assert.equal (
+                                actual,
+                                ParserStep.Success
+                                    {
+                                        Backtrackable = true
+                                        Value = ()
+                                        State =
+                                            {
+                                                Source = "abcB"
+                                                Offset = 3
+                                                Indent = 0
+                                                Context = []
+                                                Row = 1
+                                                Column = 4
+                                            }
+                                    }
+                            )
+                        )
+
+                    testCase
+                        "eat until the end of the string"
+                        (fun () ->
+                            let (Parser parse) = eatWhile (fun c -> c.ToLowerInvariant() = c)
+
+                            let actual = parse (State.Initial<obj> "abc")
+
+                            Assert.equal (
+                                actual,
+                                ParserStep.Success
+                                    {
+                                        Backtrackable = true
+                                        Value = ()
+                                        State =
+                                            {
+                                                Source = "abc"
+                                                Offset = 3
+                                                Indent = 0
+                                                Context = []
+                                                Row = 1
+                                                Column = 4
+                                            }
+                                    }
+                            )
+                        )
+
+                    testCase
+                        "support new line"
+                        (fun () ->
+                            let (Parser parse) =
+                                eatWhile (fun c -> c.ToLowerInvariant() = c || c = "\n")
+
+                            let actual = parse (State.Initial<obj> "abc\ndef\nA")
+
+                            Assert.equal (
+                                actual,
+                                ParserStep.Success
+                                    {
+                                        Backtrackable = true
+                                        Value = ()
+                                        State =
+                                            {
+                                                Source = "abc\ndef\nA"
+                                                Offset = 8
+                                                Indent = 0
+                                                Context = []
+                                                Row = 3
+                                                Column = 1
+                                            }
+                                    }
+                            )
+                        )
+                ]
+
+            testList
+                "exhausted"
+                [
+
+                    test "returns success if the parser is at the end of the string" {
+                        let (Parser parse) = exhausted Problem.ExpectingEnd
+
+                        let actual =
+                            parse
+                                {
+                                    Source = "abc"
+                                    Offset = 3
+                                    Indent = 0
+                                    Context = []
+                                    Row = 1
+                                    Column = 4
+                                }
+
+                        Assert.equal (
+                            actual,
+                            ParserStep.Success
+                                {
+                                    Backtrackable = false
+                                    Value = ()
+                                    State =
+                                        {
+                                            Source = "abc"
+                                            Offset = 3
+                                            Indent = 0
+                                            Context = []
+                                            Row = 1
+                                            Column = 4
+                                        }
+                                }
+                        )
+                    }
+
+                    test "returns success on empty string" {
+                        let (Parser parse) = exhausted Problem.ExpectingEnd
+
+                        let actual = parse (State.Initial<obj> "")
+
+                        Assert.equal (
+                            actual,
+                            ParserStep.Success
+                                {
+                                    Backtrackable = false
+                                    Value = ()
+                                    State =
+                                        {
+                                            Source = ""
+                                            Offset = 0
+                                            Indent = 0
+                                            Context = []
+                                            Row = 1
+                                            Column = 1
+                                        }
+                                }
+                        )
+                    }
+
+                    test "returns an error if the parser is not at the end of the string" {
+                        let (Parser parse) = exhausted Problem.ExpectingEnd
+
+                        let actual =
+                            parse
+                                {
+                                    Source = "abc"
+                                    Offset = 2
+                                    Indent = 0
+                                    Context = []
+                                    Row = 1
+                                    Column = 3
+                                }
+
+                        Assert.equal (
+                            actual,
+                            ParserStep.Failed
+                                {
+                                    Backtrackable = false
+                                    Bag =
+                                        AddRight(
+                                            Empty,
+                                            {
+                                                Row = 1
+                                                Column = 3
+                                                Problem = Problem.ExpectingEnd
+                                                ContextStack = []
+                                            }
+                                        )
+                                }
+                        )
+                    }
 
                 ]
         ]
