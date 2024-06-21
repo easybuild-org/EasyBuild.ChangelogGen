@@ -16,7 +16,9 @@
         <Compile Include="Log.fs" />
         <Compile Include="Commands/Generate.fs" />
         <Compile Include="Commands/Version.fs" />
-        <Compile Include="Parser.fs" />
+        <Compile Include="Parser/LowLevel.fs" />
+        <Compile Include="Parser/Base.fs" />
+        <Compile Include="Parser/Simple.fs" />
         <Compile Include="Changelog.fs" />
         <Compile Include="Main.fs" />
     </ItemGroup>
