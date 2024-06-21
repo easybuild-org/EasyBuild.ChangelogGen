@@ -78,61 +78,266 @@ open System
 //     Assert.That(parse content, Is.EqualTo expected)
 
 type Assert =
-    static member equal (actual : 'T, expected : 'T, ?message : string) =
+    static member equal(actual: 'T, expected: 'T, ?message: string) =
         let message = defaultArg message ""
 
         Expect.equal actual expected message
 
 let all =
-    testList "Parser" [
-        testList "FindSubString" [
+    testList
+        "Parser"
+        [
+            testList
+                "FindSubString"
+                [
 
-            testCase "works when the searched string is at the beginning" (fun () ->
-                let actual = Parser.findSubString "42" 0 1 1 "42 is the answer!"
+                    testCase
+                        "works when the searched string is at the beginning"
+                        (fun () ->
+                            let actual = Parser.findSubString "42" 0 1 1 "42 is the answer!"
 
-                Assert.equal(actual, (Parser.SubStringResult.Create 0 1 3))
-            )
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 0 1 3 |> Parser.SubStringResult.Match
+                            )
+                        )
 
-            testCase "works when the searched string is at the end" (fun () ->
-                let actual = Parser.findSubString "answer!" 0 1 1 "42 is the answer!"
+                    testCase
+                        "works when the searched string is at the end"
+                        (fun () ->
+                            let actual = Parser.findSubString "answer!" 0 1 1 "42 is the answer!"
 
-                Assert.equal(actual, Parser.SubStringResult.Create 10 1 18)
-            )
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 10 1 18
+                                |> Parser.SubStringResult.Match
+                            )
+                        )
 
-            testCase "works when the searched string is in the middle" (fun () ->
-                let actual = Parser.findSubString "is" 0 1 1 "42 is the answer!"
+                    testCase
+                        "works when the searched string is in the middle"
+                        (fun () ->
+                            let actual = Parser.findSubString "is" 0 1 1 "42 is the answer!"
 
-                Assert.equal(actual, Parser.SubStringResult.Create 3 1 6)
-            )
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 3 1 6 |> Parser.SubStringResult.Match
+                            )
+                        )
 
-            testCase "works when the searched string is at the beginning of a new line" (fun () ->
-                let actual = Parser.findSubString "42" 0 1 1 "Is \n\n\n42\nthe answer?"
+                    testCase
+                        "works when the searched string is at the beginning of a new line"
+                        (fun () ->
+                            let actual = Parser.findSubString "42" 0 1 1 "Is \n\n\n42\nthe answer?"
 
-                Assert.equal(actual, Parser.SubStringResult.Create 6 4 3)
-            )
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 6 4 3 |> Parser.SubStringResult.Match
+                            )
+                        )
 
-            testCase "make sure the same column is returned relativy to row positio" (fun () ->
-                let actual = Parser.findSubString "42" 0 1 1 "Is 42 the answer?"
+                    testCase
+                        "make sure the same column is returned relativy to row positio"
+                        (fun () ->
+                            let actual = Parser.findSubString "42" 0 1 1 "Is 42 the answer?"
 
-                Assert.equal(actual, Parser.SubStringResult.Create 3 1 6)
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 3 1 6 |> Parser.SubStringResult.Match
+                            )
 
-                let actual = Parser.findSubString "42" 0 1 1 "\nIs 42 the answer?"
+                            let actual = Parser.findSubString "42" 0 1 1 "\nIs 42 the answer?"
 
-                Assert.equal(actual, Parser.SubStringResult.Create 4 2 6)
-            )
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 4 2 6 |> Parser.SubStringResult.Match
+                            )
+                        )
 
-            testCase "works with unicode taking 2 bytes" (fun () ->
-                let actual = Parser.findSubString "👍" 0 1 1 "Great 👍"
+                    testCase
+                        "works with unicode taking 2 bytes"
+                        (fun () ->
+                            let actual = Parser.findSubString "👍" 0 1 1 "Great 👍"
 
-                Assert.equal(actual, Parser.SubStringResult.Create 6 1 8)
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 6 1 8 |> Parser.SubStringResult.Match
+                            )
 
-                let actual = Parser.findSubString "👍" 0 1 1 "This is a 👍 great emoji"
+                            let actual = Parser.findSubString "👍" 0 1 1 "This is a 👍 great emoji"
 
-                Assert.equal(actual, Parser.SubStringResult.Create 10 1 12)
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 10 1 12
+                                |> Parser.SubStringResult.Match
+                            )
 
-                let actual = Parser.findSubString "👍" 0 1 1 "🚀 This is a 👍 great emoji"
+                            let actual =
+                                Parser.findSubString "👍" 0 1 1 "🚀 This is a 👍 great emoji"
 
-                Assert.equal(actual, Parser.SubStringResult.Create 13 1 14)
-            )
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 13 1 14
+                                |> Parser.SubStringResult.Match
+                            )
+                        )
+
+                    testCase
+                        "returns NoMatch if the searched string is not found"
+                        (fun () ->
+                            let actual = Parser.findSubString "42" 0 1 1 "Is the answer?"
+
+                            Assert.equal (actual, Parser.SubStringResult.NoMatch)
+                        )
+                ]
+
+            testList
+                "isAsciiCode"
+                [
+
+                    testCase
+                        "works with ascii code"
+                        (fun () ->
+                            let actual = Parser.isAsciiCode 97 4 "xxxxa"
+
+                            Assert.equal (actual, true)
+
+                            let actual = Parser.isAsciiCode 97 0 "a"
+
+                            Assert.equal (actual, true)
+
+                            let actual = Parser.isAsciiCode 125 4 "xxxx}"
+
+                            Assert.equal (actual, true)
+                        )
+
+                    testCase
+                        "returns false if the character is not an ascii code"
+                        (fun () ->
+                            let actual = Parser.isAsciiCode 97 4 "xxxx👍"
+
+                            Assert.equal (actual, false)
+                        )
+
+                    testCase
+                        "returns false if the character is different from the ascii code"
+                        (fun () ->
+                            let actual = Parser.isAsciiCode 97 4 "xxxxb"
+
+                            Assert.equal (actual, false)
+                        )
+
+                ]
+
+            testList
+                "charMatchAt"
+                [
+
+                    testCase
+                        "returns NoMatch if offset is out of bounds"
+                        (fun () ->
+                            let actual = Parser.charMatchAt (fun _ -> true) 10 "abc"
+
+                            Assert.equal (actual, Parser.CharMatchAtResult.NoMatch)
+                        )
+
+                    testCase
+                        "returns 'offset + 1' if the character matches and is encoded on 1 bytes in UTF-16"
+                        (fun () ->
+                            let actual = Parser.charMatchAt (fun c -> c = "a") 0 "abc"
+
+                            Assert.equal (actual, Parser.CharMatchAtResult.Match 1)
+                        )
+
+                    testCase
+                        "returns 'offset + 2' if the character matches and is encoded on 2 bytes in UTF-16"
+                        (fun () ->
+                            let actual = Parser.charMatchAt (fun c -> c = "👍") 0 "👍abc"
+
+                            Assert.equal (actual, Parser.CharMatchAtResult.Match 2)
+                        )
+                ]
+
+            testList
+                "isSubStringAt"
+                [
+                    testCase
+                        "works when the searched string is at the beginning"
+                        (fun () ->
+                            let actual = Parser.isSubStringAt "let" 0 1 1 "let x = 42"
+
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 3 1 4
+                                |> Parser.IsSubStringAtResult.Match
+                            )
+                        )
+
+                    testCase
+                        "works when the searched string is at the end"
+                        (fun () ->
+                            let actual = Parser.isSubStringAt "42" 8 1 1 "let x = 42"
+
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 10 1 3
+                                |> Parser.IsSubStringAtResult.Match
+                            )
+                        )
+
+                    testCase "works when searching in string with 2 bytes unicode character"
+                        (fun () ->
+                            let actual = Parser.isSubStringAt "Great 👍" 9 1 1 "let x = \"Great 👍 work\""
+
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 17 1 8
+                                |> Parser.IsSubStringAtResult.Match
+                            )
+                        )
+
+                    testCase "works for search for a 2 bytes unicode character"
+                        (fun () ->
+                            let actual = Parser.isSubStringAt "👍" 15 1 1 "let x = \"Great 👍 work\""
+
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 17 1 2
+                                |> Parser.IsSubStringAtResult.Match
+                            )
+                        )
+
+                    testCase "works for search for a 2 bytes unicode character at the end"
+                        (fun () ->
+                            let actual = Parser.isSubStringAt "👍" 8 1 1 "let x = 👍"
+
+                            Assert.equal (
+                                actual,
+                                Parser.CursorPosition.Create 10 1 2
+                                |> Parser.IsSubStringAtResult.Match
+                            )
+                        )
+
+                    testCase "returns no match if the searched string is not found at the given offset"
+                        (fun () ->
+                            let actual = Parser.isSubStringAt "42" 0 1 1 "let x = 42"
+
+                            Assert.equal (
+                                actual,
+                                Parser.IsSubStringAtResult.NoMatch
+                            )
+                        )
+
+                    testCase
+                        "returns NoMatch is the searched string is not found (overflows at the end)"
+                        (fun () ->
+                            let actual = Parser.isSubStringAt "42;" 8 1 1 "let x = 42"
+
+                            Assert.equal (
+                                actual,
+                                Parser.IsSubStringAtResult.NoMatch
+                            )
+                        )
+
+                ]
         ]
-    ]

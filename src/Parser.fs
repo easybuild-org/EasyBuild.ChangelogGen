@@ -423,16 +423,15 @@ let inline private isTwoBytesUtf16Characters (charCode: int) =
     // Is this the right way to detect UTF-16 characters that take 2 bytes?
     charCode >= 0xD800 && charCode <= 0xDBFF
 
-    // let bytes = Encoding.Unicode.GetBytes(string code)
-    // Array.length bytes = 2 && bytes.[1] = 255uy
+// let bytes = Encoding.Unicode.GetBytes(string code)
+// Array.length bytes = 2 && bytes.[1] = 255uy
 
-    // // https://learn.microsoft.com/en-us/dotnet/api/system.text.encoding.getpreamble?view=net-8.0
-    // let rune = char.EnumerateRunes()
+// // https://learn.microsoft.com/en-us/dotnet/api/system.text.encoding.getpreamble?view=net-8.0
+// let rune = char.EnumerateRunes()
 
-    // rune.Current.Utf16SequenceLength = 2
+// rune.Current.Utf16SequenceLength = 2
 
-[<Struct>]
-type SubStringResult =
+type CursorPosition =
     {
         Offset: int
         Row: int
@@ -445,6 +444,13 @@ type SubStringResult =
             Row = row
             Column = col
         }
+
+
+[<Struct>]
+[<RequireQualifiedAccess>]
+type SubStringResult =
+    | NoMatch
+    | Match of CursorPosition
 
 /// <summary>
 /// Find a substring after a given offset.
@@ -461,7 +467,7 @@ type SubStringResult =
 /// For <c>findSubString "42" 0 1 1 "42 is the answer!"</c> the result is <c>{ Offset = 0; Row = 1; Column = 3 }</c>.
 /// For <c>findSubString "answer!" 0 1 1 "42 is the answer!"</c> the result is <c>{ Offset = 10; Row = 1; Column = 18 }</c>.
 /// </returns>
-let findSubString (searchedString: string) (offset: int) (row: int) (col: int) (text: string) =
+let findSubString (searchedString: string) (offset: int) (row: int) (col: int) (text: string) : SubStringResult =
     let newOffset = text.IndexOf(searchedString, offset)
 
     let target =
@@ -470,29 +476,150 @@ let findSubString (searchedString: string) (offset: int) (row: int) (col: int) (
         else
             newOffset + searchedString.Length
 
+    if newOffset = -1 then
+        SubStringResult.NoMatch
+    else
+        // Memory
+        let mutable offset = offset
+        let mutable row = row
+        let mutable col = col
+
+        let newText = text.Substring(offset)
+        let mutable iterator = newText.EnumerateRunes()
+
+        while offset < target do
+            let rune = iterator.Current
+            offset <- offset + 1
+
+            if rune.Value = 10 then // '\n'
+                row <- row + 1
+                col <- 2
+            else if rune.Utf16SequenceLength <> 2 then
+                col <- col + 1
+
+            iterator.MoveNext() |> ignore
+
+        SubStringResult.Match (CursorPosition.Create newOffset row col)
+
+
+/// <summary>
+/// Checks if the character at the specified offset in the text is an ASCII character
+/// and equals the given character code.
+/// </summary>
+/// <param name="charCode">The character code to compare.</param>
+/// <param name="offset">The offset of the character in the text.</param>
+/// <param name="text">The text to check.</param>
+/// <returns>
+/// True if the character at the specified offset in the text is an ASCII character
+/// and the character code matches the ASCII code of the character at the specified offset in the text, otherwise false.
+/// </returns>
+let isAsciiCode (charCode: int) (offset: int) (text: string) =
+    let charText = text.[offset]
+
+    (string charText).EnumerateRunes().Current.IsAscii && charCode = int charText
+
+// Is using a DUs Struct a good idea?
+// In general, others parsers use `int` directly but this hurts readability of the code.
+// By using, a DU Struct I hope to make the code more readable and still keep the performance.
+[<Struct>]
+[<RequireQualifiedAccessAttribute>]
+type CharMatchAtResult =
+    /// <summary>
+    /// The character at the specified offset in the text did not match the character code.
+    /// </summary>
+    | NoMatch
+    /// <summary>
+    /// The character at the specified offset in the text matched the character code
+    /// and was a new line character.
+    /// </summary>
+    | NewLine
+    /// <summary>
+    /// The character at the specified offset in the text matched the character code
+    /// </summary>
+    | Match of int
+
+/// <summary>
+/// Checks if the character at the specified offset in the text matches the given predicate.
+///
+/// Important: We are using <c>string -> bool</c> instead of <c>char -> bool</c> otherwise we
+/// can't work with UTF-16 characters / emojis.
+///
+/// In the future, we should probably use <c>Rune</c> instead of <c>string</c>.
+/// But Fable, doesn't support <c>Rune</c> yet.
+/// </summary>
+/// <param name="predicate">The predicate to check if the character matches.</param>
+/// <param name="offset">The offset of the character in the text.</param>
+/// <param name="text">The text to check.</param>
+/// <returns>
+/// - <c>NoMatch</c> if the character at the specified offset in the text did not match the character code.
+/// - <c>NewLine</c> if the character at the specified offset in the text matched the character code and was a new line character.
+/// - <c>Match newOffset</c> if the character at the specified offset in the text matched the character code.
+///
+///     The <c>newOffset</c> is the offset of the next character in the text.
+///
+///     It is <c>offset + 1</c> if the character is encoded on 1 byte in UTF-16 and <c>offset + 2</c> if the character is encoded on 2 bytes in UTF-16.
+/// </returns>
+let charMatchAt (predicate : string -> bool) (offset: int) (text: string) =
+    if text.Length <= offset then
+        CharMatchAtResult.NoMatch
+    else
+        let runeChar = Rune.GetRuneAt(text, offset)
+        let charText = runeChar.ToString()
+
+        if runeChar.Utf16SequenceLength = 2 then
+            if predicate charText then
+                CharMatchAtResult.Match (offset + 2)
+            else
+                CharMatchAtResult.NoMatch
+        else
+            if predicate charText then
+                if runeChar.Value = 10 then
+                    CharMatchAtResult.NewLine
+                else
+                    CharMatchAtResult.Match (offset + 1)
+            else
+                CharMatchAtResult.NoMatch
+
+[<Struct>]
+[<RequireQualifiedAccess>]
+type IsSubStringAtResult =
+    | NoMatch
+    | Match of CursorPosition
+
+let isSubStringAt
+    (searchedString: string)
+    (offset: int)
+    (row: int)
+    (col: int)
+    (text: string) =
+
+    let searchedStringLength = searchedString.Length
+
     // Memory
+    let mutable isGood = offset + searchedStringLength <= text.Length
+    // Lookup index in the searched string
+    let mutable i = 0
+    // Lookup offset position in the text
     let mutable offset = offset
     let mutable row = row
     let mutable col = col
 
-    let newText = text.Substring(offset)
-    let mutable iterator = newText.EnumerateRunes()
-
-    while offset < target do
-        let rune = iterator.Current
-        offset <- offset + 1
+    while isGood && i < searchedStringLength do
+        let rune = Rune.GetRuneAt(text, offset)
 
         if rune.Value = 10 then // '\n'
             row <- row + 1
-            col <- 2
+            col <- 1
         else
-            if rune.Utf16SequenceLength <> 2 then
-                col <- col + 1
+            col <- col + 1
 
-        iterator.MoveNext() |> ignore
+        isGood <- Rune.GetRuneAt(searchedString, i) = rune
 
-    {
-        Offset = newOffset
-        Row = row
-        Column = col
-    }
+        if isGood then
+            i <- i + rune.Utf16SequenceLength
+            offset <- offset + rune.Utf16SequenceLength
+
+    if isGood then
+        IsSubStringAtResult.Match (CursorPosition.Create offset row col)
+    else
+        IsSubStringAtResult.NoMatch
