@@ -6,7 +6,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Prelude.fs" />
         <Compile Include="Changelog.fs" />
+        <Compile Include="Parser.Simple.fs" />
         <Compile Include="Main.fs" />
     </ItemGroup>
 

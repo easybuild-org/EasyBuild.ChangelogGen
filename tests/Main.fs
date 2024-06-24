@@ -6,5 +6,6 @@ open Fable.Pyxpecto
 let main argv =
     testList "All" [
         ChangelogTests.all
+        Parser.Simple.tests
     ]
     |> Pyxpecto.runTests [||]
