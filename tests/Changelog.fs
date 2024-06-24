@@ -5,8 +5,8 @@ open EasyBuild.ChangelogGen
 open EasyBuild.ChangelogGen.Changelog
 open Semver
 open System
+open Parser
 open Parser.LowLevel
-open Parser.Simple
 open Parser.Base
 open System.Text
 open System.Linq
@@ -80,12 +80,6 @@ open System.Linq
 //         }
 
 //     Assert.That(parse content, Is.EqualTo expected)
-
-type Assert =
-    static member equal(actual: 'T, expected: 'T, ?message: string) =
-        let message = defaultArg message ""
-
-        Expect.equal actual expected message
 
 let all =
     testList
@@ -334,37 +328,39 @@ let all =
 
                 ]
 
-            testList "eatBase10" [
+            testList
+                "chompBase10"
+                [
 
-                test "works with a single digit" {
-                    let actual = eatBase10 0 "0"
+                    test "works with a single digit" {
+                        let actual = chompBase10 0 "0"
 
-                    Assert.equal (actual, 1)
-                }
+                        Assert.equal (actual, 1)
+                    }
 
-                test "supports all the digits" {
-                    let actual = eatBase10 0 "0123456789"
+                    test "supports all the digits" {
+                        let actual = chompBase10 0 "0123456789"
 
-                    Assert.equal (actual, 10)
-                }
+                        Assert.equal (actual, 10)
+                    }
 
-                test "stops at the first non digit character" {
-                    let actual = eatBase10 0 "0123a456789"
+                    test "stops at the first non digit character" {
+                        let actual = chompBase10 0 "0123a456789"
 
-                    Assert.equal (actual, 4)
-                }
+                        Assert.equal (actual, 4)
+                    }
 
-            ]
+                ]
 
             testList
-                "eatUntil"
+                "chompUntil"
                 [
 
                     testCase
                         "return Ok if the searched string is found"
                         (fun () ->
-                            let token = toToken "*)"
-                            let actual = run (eatUntil token) "(* this is a comment *)"
+                            let token = Parser.toToken "*)"
+                            let actual = run (chompUntil token) "(* this is a comment *)"
 
                             Assert.equal (actual, Ok())
                         )
@@ -372,8 +368,8 @@ let all =
                     testCase
                         "return an Error if the searched token is not found"
                         (fun () ->
-                            let token = toToken "*)"
-                            let actual = run (eatUntil token) "(* this is a comment"
+                            let token = Parser.toToken "*)"
+                            let actual = run (chompUntil token) "(* this is a comment"
 
                             Assert.equal (
                                 actual,
@@ -391,14 +387,14 @@ let all =
                 ]
 
             testList
-                "eatIf"
+                "chompIf"
                 [
 
                     testCase
                         "return Ok if the parser succeeds"
                         (fun () ->
                             let parser =
-                                eatIf (fun c -> c.ToLowerInvariant() = c) Problem.UnexpectedChar
+                                chompIf (fun c -> c.ToLowerInvariant() = c) Problem.UnexpectedChar
 
                             let actual = run parser "a"
 
@@ -409,7 +405,7 @@ let all =
                         "return an Error if the parser fails"
                         (fun () ->
                             let parser =
-                                eatIf (fun c -> c.ToLowerInvariant() = c) Problem.UnexpectedChar
+                                chompIf (fun c -> c.ToLowerInvariant() = c) Problem.UnexpectedChar
 
                             let actual = run parser "A"
 
@@ -430,7 +426,7 @@ let all =
                     testCase
                         "new line is handled correctly"
                         (fun () ->
-                            let (Parser parse) = eatIf (fun c -> c = "\n") Problem.UnexpectedChar
+                            let (Parser parse) = chompIf (fun c -> c = "\n") Problem.UnexpectedChar
 
                             let actual = parse (State.Initial<obj> "\nSecondLine")
 
@@ -455,13 +451,13 @@ let all =
                 ]
 
             testList
-                "eatWhile"
+                "chompWhile"
                 [
 
                     testCase
-                        "eat until the predicate fails"
+                        "chomp until the predicate fails"
                         (fun () ->
-                            let (Parser parse) = eatWhile (fun c -> c.ToLowerInvariant() = c)
+                            let (Parser parse) = chompWhile (fun c -> c.ToLowerInvariant() = c)
 
                             let actual = parse (State.Initial<obj> "abcB")
 
@@ -485,9 +481,9 @@ let all =
                         )
 
                     testCase
-                        "eat until the end of the string"
+                        "chomp until the end of the string"
                         (fun () ->
-                            let (Parser parse) = eatWhile (fun c -> c.ToLowerInvariant() = c)
+                            let (Parser parse) = chompWhile (fun c -> c.ToLowerInvariant() = c)
 
                             let actual = parse (State.Initial<obj> "abc")
 
@@ -514,7 +510,7 @@ let all =
                         "support new line"
                         (fun () ->
                             let (Parser parse) =
-                                eatWhile (fun c -> c.ToLowerInvariant() = c || c = "\n")
+                                chompWhile (fun c -> c.ToLowerInvariant() = c || c = "\n")
 
                             let actual = parse (State.Initial<obj> "abc\ndef\nA")
 
@@ -633,4 +629,267 @@ let all =
                     }
 
                 ]
+
+            testList
+                "consumeBase16"
+                [
+
+                    testCase
+                        "works with a single digit"
+                        (fun () ->
+                            let actual = consumeBase16 0 "0"
+
+                            Assert.equal (actual, (1, 0))
+                        )
+
+                    testCase
+                        "supports all the base16 symbols"
+                        (fun () ->
+                            // Check all the symbols and their values
+                            Assert.equal (consumeBase16 0 "0", (1, 0))
+                            Assert.equal (consumeBase16 0 "1", (1, 1))
+                            Assert.equal (consumeBase16 0 "2", (1, 2))
+                            Assert.equal (consumeBase16 0 "3", (1, 3))
+                            Assert.equal (consumeBase16 0 "4", (1, 4))
+                            Assert.equal (consumeBase16 0 "5", (1, 5))
+                            Assert.equal (consumeBase16 0 "6", (1, 6))
+                            Assert.equal (consumeBase16 0 "7", (1, 7))
+                            Assert.equal (consumeBase16 0 "8", (1, 8))
+                            Assert.equal (consumeBase16 0 "9", (1, 9))
+                            Assert.equal (consumeBase16 0 "a", (1, 10))
+                            Assert.equal (consumeBase16 0 "b", (1, 11))
+                            Assert.equal (consumeBase16 0 "c", (1, 12))
+                            Assert.equal (consumeBase16 0 "d", (1, 13))
+                            Assert.equal (consumeBase16 0 "e", (1, 14))
+                            Assert.equal (consumeBase16 0 "f", (1, 15))
+                            Assert.equal (consumeBase16 0 "A", (1, 10))
+                            Assert.equal (consumeBase16 0 "B", (1, 11))
+                            Assert.equal (consumeBase16 0 "C", (1, 12))
+                            Assert.equal (consumeBase16 0 "D", (1, 13))
+                            Assert.equal (consumeBase16 0 "E", (1, 14))
+                            Assert.equal (consumeBase16 0 "F", (1, 15))
+                            // Check that multiple symbols are supported
+                            Assert.equal (consumeBase16 0 "A1F4", (4, 41460))
+                        )
+
+                    testCase
+                        "stops at the first non base16 symbol"
+                        (fun () ->
+                            Assert.equal (consumeBase16 0 "A1F4Z4", (4, 41460))
+                            Assert.equal (consumeBase16 0 "Z4A1F4", (0, 0))
+                        )
+
+                ]
+
+            testList
+                "consumeBase"
+                [
+                    testCase
+                        "works with base 2"
+                        (fun () ->
+                            Assert.equal (consumeBase 2 0 "01", (2, 1))
+                            Assert.equal (consumeBase 2 0 "0101", (4, 5))
+                        )
+
+                    testCase
+                        "works with base 8"
+                        (fun () ->
+                            Assert.equal (consumeBase 8 0 "01234567", (8, 342391))
+                            Assert.equal (consumeBase 8 0 "0123a4567", (4, 83))
+                        )
+
+                    testCase
+                        "works with base 10"
+                        (fun () ->
+                            Assert.equal (consumeBase 10 0 "0123456789", (10, 123456789))
+                            Assert.equal (consumeBase 10 0 "0123a456789", (4, 123))
+                        )
+
+                    testCase
+                        "stops at the first non base symbol"
+                        (fun () ->
+                            Assert.equal (consumeBase 10 0 "0123a456789", (4, 123))
+                            Assert.equal (consumeBase 10 0 "a0123456789", (0, 0))
+                        )
+                ]
+
+            testList "bumpOffset" [
+                testCase "works for positive offset" (fun () ->
+                    let actual = bumpOffset 5 {
+                        Source = ""
+                        Offset = 15
+                        Indent = 0
+                        Context = []
+                        Row = 1
+                        Column = 16
+                    }
+
+                    Assert.equal (
+                        actual,
+                        {
+                            Source = ""
+                            Offset = 5
+                            Indent = 0
+                            Context = []
+                            Row = 1
+                            Column = 6
+                        }
+                    )
+                )
+            ]
+
+            testList "token"
+                [
+                    testCase "works with a single character" (fun () ->
+                        let (Parser parse) = token (Parser.toToken "(*")
+
+                        let actual = parse (State.Initial<obj> "(* This is a comment *)")
+
+                        Assert.equal (
+                            actual,
+                            ParserStep.Success
+                                {
+                                    Backtrackable = true
+                                    Value = ()
+                                    State =
+                                        {
+                                            Source = "(* This is a comment *)"
+                                            Offset = 2
+                                            Indent = 0
+                                            Context = []
+                                            Row = 1
+                                            Column = 3
+                                        }
+                                }
+                        )
+                    )
+
+                    testCase "doesn't progress if the token is not found" (fun () ->
+                        let (Parser parse) = token (Parser.toToken "(*")
+
+                        let actual = parse (State.Initial<obj> "This is a comment *)")
+
+                        Assert.equal (
+                            actual,
+                            ParserStep.Failed
+                                {
+                                    Backtrackable = false
+                                    Bag =
+                                        AddRight(
+                                            Empty,
+                                            {
+                                                Row = 1
+                                                Column = 1
+                                                Problem = Problem.Expecting "(*"
+                                                ContextStack = []
+                                            }
+                                        )
+                                }
+                        )
+                    )
+                ]
+
+            testList "backtrackable"
+                [
+                    testCase "returns the value if the parser is successful" (fun () ->
+                        let (Parser parse) = backtrackable (token (Parser.toToken "(*"))
+
+                        let actual = parse (State.Initial<obj> "(* This is a comment *)")
+
+                        Assert.equal (
+                            actual,
+                            ParserStep.Success
+                                {
+                                    Backtrackable = false
+                                    Value = ()
+                                    State =
+                                        {
+                                            Source = "(* This is a comment *)"
+                                            Offset = 2
+                                            Indent = 0
+                                            Context = []
+                                            Row = 1
+                                            Column = 3
+                                        }
+                                }
+                        )
+                    )
+                ]
+
+            testList
+                "getChompedString" [
+                    testCase "returns the chomped string" (fun () ->
+                        let (Parser parse) = getChompedString (chompWhile (fun c -> c = "a"))
+
+                        let actual = parse (State.Initial<obj> "aaaaaabb")
+
+                        Assert.equal (
+                            actual,
+                            ParserStep.Success
+                                {
+                                    Backtrackable = true
+                                    Value = "aaaaaa"
+                                    State =
+                                        {
+                                            Source = "aaaaaabb"
+                                            Offset = 6
+                                            Indent = 0
+                                            Context = []
+                                            Row = 1
+                                            Column = 7
+                                        }
+                                }
+                        )
+                    )
+                ]
+
+            testList "chumpUntilEndOr" [
+                testCase "chomp all the characters until the end of the string if the subString is not found" (fun () ->
+                    let (Parser parse) = chumpUntilEndOr "*"
+
+                    let actual = parse (State.Initial<obj> "This is a string of characters")
+
+                    Assert.equal (
+                        actual,
+                        ParserStep.Success
+                            {
+                                Backtrackable = true
+                                Value = ()
+                                State =
+                                    {
+                                        Source = "This is a string of characters"
+                                        Offset = 30
+                                        Indent = 0
+                                        Context = []
+                                        Row = 1
+                                        Column = 31
+                                    }
+                            }
+                    )
+                )
+
+                testCase "chomp all the characters until the subString is found" (fun () ->
+                    let (Parser parse) = chumpUntilEndOr "*"
+
+                    let actual = parse (State.Initial<obj> "This is a string * of characters")
+
+                    Assert.equal (
+                        actual,
+                        ParserStep.Success
+                            {
+                                Backtrackable = true
+                                Value = ()
+                                State =
+                                    {
+                                        Source = "This is a string * of characters"
+                                        Offset = 18
+                                        Indent = 0
+                                        Context = []
+                                        Row = 1
+                                        Column = 19
+                                    }
+                            }
+                    )
+                )
+            ]
         ]

@@ -4,3 +4,6 @@
 [![](https://img.shields.io/badge/Sponsors-EA4AAA)](https://mangelmaxime.github.io/sponsors/)
 
 A tool for generating changelog based on Git history. Commit format is based on the format described in [EasyBuild.CommitParser](https://github.com/easybuild-org/EasyBuild.CommitParser#commit-format).
+
+TODO: Is the property `Backtrackable` named correctly?
+If yes, why do we set it to false in the `backtrackable` parser?

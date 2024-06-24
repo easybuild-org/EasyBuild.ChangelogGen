@@ -2,32 +2,6 @@ module Parser.LowLevel
 
 open System.Text
 
-type Position =
-    {
-        Row: int
-        Column: int
-    }
-
-    static member inline Create (row: int) (column: int) =
-        {
-            Row = row
-            Column = column
-        }
-
-type CursorPosition =
-    {
-        Offset: int
-        Row: int
-        Column: int
-    }
-
-    static member inline Create (offset: int) (row: int) (col: int) =
-        {
-            Offset = offset
-            Row = row
-            Column = col
-        }
-
 [<Struct>]
 [<RequireQualifiedAccess>]
 type SubStringResult =
@@ -206,7 +180,7 @@ let isSubStringAt (searchedString: string) (offset: int) (row: int) (col: int) (
     else
         IsSubStringAtResult.NoMatch
 
-let eatBase10 (offset : int) (text : string) =
+let chompBase10 (offset: int) (text: string) =
     let mutable offset = offset
     let mutable isGood = true
 
@@ -218,3 +192,64 @@ let eatBase10 (offset : int) (text : string) =
             offset <- offset + rune.Utf16SequenceLength
 
     offset
+
+/// <summary>
+/// Consumes a number in the given base from the text.
+///
+/// Important: The base must be between 2 and 10.
+/// </summary>
+/// <param name="base'">The base of the number to consume</param>
+/// <param name="offset">The position to start consuming from</param>
+/// <param name="text">The text to consume from</param>
+/// <returns>
+/// The new offset and the value in base 10 of the consumed number.
+/// </returns>
+let consumeBase (base': int) (offset: int) (text: string) =
+    assert (base' >= 2 && base' <= 36)
+
+    let mutable offset = offset
+    let mutable isGood = true
+    let mutable total = 0
+
+    while isGood && offset < text.Length do
+        let rune = Rune.GetRuneAt(text, offset)
+        let digit = rune.Value - 48
+
+        isGood <- digit >= 0 && digit < base'
+
+        if isGood then
+            total <- total * base' + digit
+            offset <- offset + rune.Utf16SequenceLength
+
+    offset, total
+
+/// <summary>
+/// Consumes a number in base 16 from the text.
+/// </summary>
+/// <param name="offset">The position to start consuming from</param>
+/// <param name="text">The text to consume from</param>
+/// <returns>
+/// The new offset and the value in base 10 of the consumed number.
+/// </returns>
+let consumeBase16 (offset: int) (text: string) =
+    let mutable offset = offset
+    let mutable isGood = true
+    let mutable total = 0
+
+    while isGood && offset < text.Length do
+        let rune = Rune.GetRuneAt(text, offset)
+        let value = rune.Value
+
+        if value >= 48 && value <= 57 then
+            total <- total * 16 + value - 48
+        elif value >= 65 && value <= 70 then
+            total <- total * 16 + value - 55
+        elif value >= 97 && value <= 102 then
+            total <- total * 16 + value - 87
+        else
+            isGood <- false
+
+        if isGood then
+            offset <- offset + rune.Utf16SequenceLength
+
+    offset, total

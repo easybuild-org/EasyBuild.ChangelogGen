@@ -25,6 +25,10 @@ open Parser.LowLevel
 //      ^
 //      6
 
+module String =
+
+    let isEmpty (text: string) = text = ""
+
 type LocatedContext<'Context> =
     {
         Row: int
@@ -49,7 +53,7 @@ type State<'Context> =
         Column: int
     }
 
-    static member inline Initial (source: string) =
+    static member inline Initial(source: string) =
         {
             Source = source
             Offset = 0
@@ -125,7 +129,6 @@ type Parser<'Context, 'Problem, 'Value> =
 
 type Token<'T> = Token of string * 'T
 
-
 let rec bagToList
     (bag: Bag<'Context, 'Problem>)
     (list: DeadEnd<'Context, 'Problem> list)
@@ -136,7 +139,11 @@ let rec bagToList
     | AddRight(bag, deadEnd) -> bagToList bag (deadEnd :: list)
     | Append(bag1, bag2) -> bagToList bag1 (bagToList bag2 list)
 
-let run (Parser parse) (src: string) =
+let run
+    (Parser parse: Parser<'Context, 'Problem, 'Value>)
+    (src: string)
+    : Result<'Value, DeadEnd<'Context, 'Problem> list>
+    =
     let state =
         {
             Source = src
@@ -245,12 +252,23 @@ let keeper
     =
     map2 (<|) parseFunc parseArg
 
+let (|=) = keeper
+
 let ignorer
     (keepParser: Parser<'Context, 'Problem, 'Keep>)
     (ignoreParser: Parser<'Context, 'Problem, 'Ignore>)
     : Parser<'Context, 'Problem, 'Keep>
     =
     map2 (fun keep _ -> keep) keepParser ignoreParser
+
+let (|.) = ignorer
+
+let skip
+    (ignoreParser: Parser<'Context, 'Problem, 'Ignore>)
+    (keeperParser: Parser<'Context, 'Problem, 'Keep>)
+    : Parser<'Context, 'Problem, 'Keep>
+    =
+    map2 (fun _ b -> b) ignoreParser keeperParser
 
 let andThen
     (func: 'A -> Parser<'Context, 'Problem, 'B>)
@@ -348,7 +366,17 @@ let rec private loopApply
                 Bag = step1.Bag
             }
 
-let backstractable
+let loop
+    (state: 'State)
+    (func: 'State -> Parser<'Context, 'Problem, (LoopStep<'State, 'Value>)>)
+    : Parser<'Context, 'Problem, 'Value>
+    =
+    Parser <| fun state0 -> loopApply false state func state0
+
+// TODO: Is the property `Backtrackable` named correctly?
+// If yes, why do we set it to false in the `backtrackable` parser?
+// I feel like property backtrackable should be named progress
+let backtrackable
     (Parser parse: Parser<'Context, 'Problem, 'Value>)
     : Parser<'Context, 'Problem, 'Value>
     =
@@ -379,7 +407,6 @@ let commit (value: 'Value) : Parser<'Context, 'Problem, 'Value> =
                 Value = value
                 State = state
             }
-
 
 let getPosition<'Context, 'Problem> : Parser<'Context, 'Problem, Position> =
     Parser
@@ -497,7 +524,7 @@ let inContext
 
         | ParserStep.Failed _ as failedStep -> failedStep
 
-let eatUntil (Token(str, expecting) : Token<'Problem>) : Parser<'Context, 'Problem, unit> =
+let chompUntil (Token(str, expecting): Token<'Problem>) : Parser<'Context, 'Problem, unit> =
     Parser
     <| fun state ->
         let result = findSubString str state.Offset state.Row state.Column state.Source
@@ -523,10 +550,10 @@ let eatUntil (Token(str, expecting) : Token<'Problem>) : Parser<'Context, 'Probl
                         }
                 }
 
-let eatIf (isGood : string -> bool) (expecting : 'Problem) : Parser<'Context, 'Problem, unit> =
+let chompIf (predicate: string -> bool) (expecting: 'Problem) : Parser<'Context, 'Problem, unit> =
     Parser
     <| fun state ->
-        let newOffset = charMatchAt isGood state.Offset state.Source
+        let newOffset = charMatchAt predicate state.Offset state.Source
 
         match newOffset with
         | CharMatchAtResult.NoMatch ->
@@ -561,14 +588,16 @@ let eatIf (isGood : string -> bool) (expecting : 'Problem) : Parser<'Context, 'P
                         }
                 }
 
-let rec private eatWhileApply
-    (isGood : string -> bool)
+let rec private chompWhileApply
+    (predicate: string -> bool)
     (offset: int)
     (row: int)
     (col: int)
-    (state: State<'Context>) : ParserStep<'Context, 'Problem, unit> =
+    (state: State<'Context>)
+    : ParserStep<'Context, 'Problem, unit>
+    =
 
-    let newOffset = charMatchAt isGood offset state.Source
+    let newOffset = charMatchAt predicate offset state.Source
 
     match newOffset with
     | CharMatchAtResult.NoMatch ->
@@ -577,23 +606,52 @@ let rec private eatWhileApply
                 Backtrackable = (state.Offset < offset)
                 Value = ()
                 State =
-                    {
-                        state with
-                            Offset = offset
-                            Row = row
-                            Column = col
+                    { state with
+                        Offset = offset
+                        Row = row
+                        Column = col
                     }
             }
-    | CharMatchAtResult.NewLine ->
-        eatWhileApply isGood (offset + 1) (row + 1) 1 state
+    | CharMatchAtResult.NewLine -> chompWhileApply predicate (offset + 1) (row + 1) 1 state
 
-    | CharMatchAtResult.Match newOffset ->
-        eatWhileApply isGood newOffset row (col + 1) state
+    | CharMatchAtResult.Match newOffset -> chompWhileApply predicate newOffset row (col + 1) state
 
-let eatWhile (isGood : string -> bool) : Parser<'Context, 'Problem, unit> =
+let chompWhile (predicate: string -> bool) : Parser<'Context, 'Problem, unit> =
+    Parser
+    <| fun state -> chompWhileApply predicate state.Offset state.Row state.Column state
+
+let chumpUntilEndOr (str: string) : Parser<'Context, 'Problem, unit> =
     Parser
     <| fun state ->
-        eatWhileApply isGood state.Offset state.Row state.Column state
+        let result = findSubString str state.Offset state.Row state.Column state.Source
+
+        // Important: chumpUntilEndOr always succeeds
+        match result with
+        | SubStringResult.NoMatch result ->
+            ParserStep.Success
+                {
+                    // I think if we reach the end of the string, it means we made progress
+                    Backtrackable = true
+                    Value = ()
+                    State =
+                        { state with
+                            Offset = state.Source.Length
+                            Row = result.Row
+                            Column = result.Column
+                        }
+                }
+        | SubStringResult.Match result ->
+            ParserStep.Success
+                {
+                    Backtrackable = state.Offset < result.Offset
+                    Value = ()
+                    State =
+                        { state with
+                            Offset = result.Offset
+                            Row = result.Row
+                            Column = result.Column
+                        }
+                }
 
 let exhausted (problem: 'Problem) : Parser<'Context, 'Problem, unit> =
     Parser
@@ -612,4 +670,104 @@ let exhausted (problem: 'Problem) : Parser<'Context, 'Problem, unit> =
                     Bag = fromState state problem
                 }
 
-let ``end`` = exhausted
+let end' = exhausted
+
+/// <summary>
+/// Updates the parser state with a new offset and adjusts the column number accordingly.
+/// </summary>
+/// <param name="newOffset">The new offset value to be set.</param>
+/// <param name="state">The current state of the parser.</param>
+/// <returns>
+/// A new state object with the updated offset and column, while other parts of the state remain unchanged.</returns>
+/// <remarks>
+/// This function is particularly useful in text parsing scenarios where tracking the current position (offset and column) within the data is necessary.
+/// It is a pure function that does not modify the input state but returns a new instance of the state with updated values.
+/// </remarks>
+let bumpOffset (newOffset: int) (state: State<'Context>) : State<'Context> =
+    { state with
+        Offset = newOffset
+        Column = state.Column + (newOffset - state.Offset)
+    }
+
+let token (Token(str, expecting)) : Parser<'Context, 'Problem, unit> =
+    Parser
+    <| fun state ->
+        let progress = not (String.isEmpty str)
+
+        let result = findSubString str state.Offset state.Row state.Column state.Source
+
+        match result with
+        | SubStringResult.NoMatch _ ->
+            ParserStep.Failed
+                {
+                    Backtrackable = false
+                    Bag = fromState state expecting
+                }
+
+        | SubStringResult.Match result ->
+            ParserStep.Success
+                {
+                    Backtrackable = progress
+                    Value = ()
+                    State =
+                        { state with
+                            Offset = result.Offset
+                            Row = result.Row
+                            Column = result.Column
+                        }
+                }
+
+let mapChompedString
+    (func: string -> 'A -> 'B)
+    (Parser parse: Parser<'Context, 'Problem, 'A>)
+    : Parser<'Context, 'Problem, 'B>
+    =
+    Parser
+    <| fun state ->
+        match parse state with
+        | ParserStep.Failed step -> ParserStep.Failed step
+        | ParserStep.Success step ->
+            let chomped = state.Source.Substring(state.Offset, step.State.Offset - state.Offset)
+            let value = func chomped step.Value
+
+            ParserStep.Success
+                {
+                    Backtrackable = step.Backtrackable
+                    Value = value
+                    State = step.State
+                }
+
+let getChompedString (parser: Parser<'Context, 'Problem, 'A>) : Parser<'Context, 'Problem, string> =
+    mapChompedString (fun chomped _ -> chomped) parser
+
+let spaces<'Context, 'Problem> : Parser<'Context, 'Problem, unit> =
+    chompWhile (fun c -> c = " " || c = "\r" || c = "\n")
+
+let keyword (Token(keywordString, expecting)) : Parser<'Context, 'Problem, unit> =
+    Parser
+    <| fun state ->
+        let progress = not (String.isEmpty keywordString)
+
+        let result =
+            isSubStringAt keywordString state.Offset state.Row state.Column state.Source
+
+        match result with
+        | IsSubStringAtResult.NoMatch ->
+            ParserStep.Failed
+                {
+                    Backtrackable = false
+                    Bag = fromState state expecting
+                }
+
+        | IsSubStringAtResult.Match cursorPosition ->
+            ParserStep.Success
+                {
+                    Backtrackable = progress
+                    Value = ()
+                    State =
+                        { state with
+                            Offset = cursorPosition.Offset
+                            Row = cursorPosition.Row
+                            Column = cursorPosition.Column
+                        }
+                }
