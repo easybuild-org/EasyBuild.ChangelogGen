@@ -1,11 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
-        <!-- <RollForward>Major</RollForward>
-        <PackAsTool>true</PackAsTool> -->
-        <!-- <ToolCommandName>commit-linter</ToolCommandName> -->
+        <RollForward>Major</RollForward>
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>changelog-gen</ToolCommandName>
     </PropertyGroup>
     <ItemGroup>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
@@ -14,22 +14,26 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Log.fs" />
+        <Compile Include="Types.fs" />
+        <Compile Include="LastVersionFinder.fs" />
+        <Compile Include="ConfigLoader.fs" />
+        <Compile Include="Git.fs" />
+        <Compile Include="Generate/Types.fs" />
+        <Compile Include="Generate/Verify.fs" />
+        <Compile Include="Generate/ReleaseContext.fs" />
+        <Compile Include="Generate/Changelog.fs" />
         <Compile Include="Commands/Generate.fs" />
         <Compile Include="Commands/Version.fs" />
-        <Compile Include="Parser/Types.fs" />
-        <Compile Include="Parser/LowLevel.fs" />
-        <Compile Include="Parser/Base.fs" />
-        <Compile Include="Parser/Simple.fs" />
-        <Compile Include="Changelog.fs" />
         <Compile Include="Main.fs" />
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="BlackFox.CommandLine" />
         <PackageReference Include="EasyBuild.CommitParser" />
-        <PackageReference Include="LibGit2Sharp" />
+        <PackageReference Include="FsToolkit.ErrorHandling" />
         <PackageReference Include="Semver" />
+        <PackageReference Include="SimpleExec" />
         <PackageReference Include="Spectre.Console.Cli" />
-        <PackageReference Include="Thoth.Json.Newtonsoft" />
     </ItemGroup>
 
 </Project>

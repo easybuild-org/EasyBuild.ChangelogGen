@@ -3,12 +3,17 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="EasyBuild.CommitParser" Version="1.0.0" />
-    <PackageVersion Include="Fable.Pyxpecto" Version="1.1.0" />
+    <PackageVersion Include="BlackFox.CommandLine" Version="1.0.0" />
+    <PackageVersion Include="EasyBuild.CommitParser" Version="1.2.0" />
+    <PackageVersion Include="EasyBuild.FileSystemProvider" Version="0.3.0" />
+    <PackageVersion Include="Expecto" Version="10.2.1" />
     <PackageVersion Include="FSharp.Core" Version="8.0.101" />
-    <PackageVersion Include="LibGit2Sharp" Version="0.30.0" />
+    <PackageVersion Include="FsToolkit.ErrorHandling" Version="4.18.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageVersion Include="Semver" Version="2.3.0" />
+    <PackageVersion Include="SimpleExec" Version="12.0.0" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.49.0" />
-    <PackageVersion Include="Thoth.Json.Newtonsoft" Version="0.2.0" />
+    <PackageVersion Include="Verify.Expecto" Version="28.2.0" />
+    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.14.3" />
   </ItemGroup>
 </Project>

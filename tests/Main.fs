@@ -1,11 +1,15 @@
 module EasyBuild.ChangelogGen.Tests.Main
 
-open Fable.Pyxpecto
+open Expecto
+
+[<Tests>]
+let allTests =
+    testList "All Tests" [
+        ReleaseContext.tests
+        Git.tests
+        Changelog.tests
+    ]
 
 [<EntryPoint>]
 let main argv =
-    testList "All" [
-        ChangelogTests.all
-        Parser.Simple.tests
-    ]
-    |> Pyxpecto.runTests [||]
+    runTestsWithCLIArgs [] Array.empty allTests

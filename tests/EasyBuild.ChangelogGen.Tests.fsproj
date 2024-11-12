@@ -3,12 +3,15 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
+        <GenerateProgramFile>false</GenerateProgramFile>
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Prelude.fs" />
+        <Compile Include="Workspace.fs" />
+        <Compile Include="Utils.fs" />
+        <Compile Include="ReleaseContext.fs" />
+        <Compile Include="Git.fs" />
         <Compile Include="Changelog.fs" />
-        <Compile Include="Parser.Simple.fs" />
         <Compile Include="Main.fs" />
     </ItemGroup>
 
@@ -17,7 +20,12 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Fable.Pyxpecto" />
+      <PackageReference Include="EasyBuild.FileSystemProvider" />
+      <PackageReference Include="Expecto" />
+      <PackageReference Include="Microsoft.NET.Test.Sdk" />
+      <PackageReference Include="Verify.Expecto" />
+      <PackageReference Include="YoloDev.Expecto.TestSdk" />
+      <PackageReference Update="FSharp.Core" VersionOverride="8.0.401" />
     </ItemGroup>
 
 </Project>
