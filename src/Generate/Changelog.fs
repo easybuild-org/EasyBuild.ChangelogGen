@@ -161,6 +161,7 @@ let generateNewVersionSection (config: ChangelogGenConfig) (releaseContext: Bump
 
                 for blockLines in additionalChangelogContent do
                     appendLine ""
+
                     for line in blockLines do
                         $"    %s{line}" |> _.TrimEnd() |> appendLine
 
@@ -170,103 +171,56 @@ let generateNewVersionSection (config: ChangelogGenConfig) (releaseContext: Bump
 
     newVersionLines |> String.concat "\n"
 
-// let private updateChangelog
-//     (config: ChangelogGenConfig)
-//     (releaseContext: BumpInfo)
-//     (changelogInfo: ChangelogInfo)
-//     =
-//     let newVersionLines = ResizeArray<string>()
+let updateWithNewVersion
+    (config: ChangelogGenConfig)
+    (releaseContext: BumpInfo)
+    (changelogInfo: ChangelogInfo)
+    =
+    let newVersionLines = generateNewVersionSection config releaseContext
 
-//     let appendLine (line: string) = newVersionLines.Add(line)
+    let rec removeConsecutiveEmptyLines
+        (previousLineWasBlank: bool)
+        (result: string list)
+        (lines: string list)
+        =
+        match lines with
+        | [] -> result
+        | line :: rest ->
+            if previousLineWasBlank && String.IsNullOrWhiteSpace(line) then
+                removeConsecutiveEmptyLines true result rest
+            else
+                removeConsecutiveEmptyLines
+                    (String.IsNullOrWhiteSpace(line))
+                    (result @ [ line ])
+                    rest
 
-//     let newLine () = newVersionLines.Add("")
+    let hasEasyBuildMetadata =
+        changelogInfo.Lines |> Seq.contains "<!-- EasyBuild: START -->"
 
-//     appendLine ($"## %s{releaseContext.NewVersion.ToString()}")
-//     newLine ()
+    let newChangelogContent =
+        [
+            // Add title and description of the original changelog
+            if hasEasyBuildMetadata then
+                yield!
+                    changelogInfo.Lines
+                    |> Seq.takeWhile (fun line -> "<!-- EasyBuild: START -->" <> line)
+            else
+                yield!
+                    changelogInfo.Lines |> Seq.takeWhile (fun line -> not (line.StartsWith("##")))
 
-//     releaseContext.CommitsForRelease
-//     |> Seq.groupBy (fun commit -> commit.SemanticCommit.Type)
-//     |> Seq.iter (fun (commitType, commits) ->
-//         match commitType with
-//         | "feat" -> appendLine "### 🚀 Features"
-//         | "fix" -> appendLine "### 🐞 Bug Fixes"
-//         | _ -> ()
+            // Ad EasyBuild metadata
+            "<!-- EasyBuild: START -->"
+            $"<!-- last_commit_released: {releaseContext.LastCommitSha} -->"
+            "<!-- EasyBuild: END -->"
+            ""
 
-//         newLine ()
+            // New version
+            newVersionLines
 
-//         for commit in commits do
-//             let githubCommitUrl sha =
-//                 $"https://github.com/glutinum-org/cli/commit/%s{sha}"
+            // Add the rest of the changelog
+            yield! changelogInfo.Lines |> Seq.skipWhile (fun line -> not (line.StartsWith("##")))
+        ]
+        |> removeConsecutiveEmptyLines false []
+        |> String.concat "\n"
 
-//             let commitUrl = githubCommitUrl commit.OriginalCommit.Hash
-
-//             let description = capitalizeFirstLetter commit.SemanticCommit.Description
-
-//             $"* %s{description} ([%s{commit.OriginalCommit.AbbrevHash}](%s{commitUrl}))"
-//             |> appendLine
-
-//             let additionalChangelogContent =
-//                 tryFindAdditionalChangelogContent commit.SemanticCommit.Body
-//                 // Indent the additional lines to be under item bullet point
-//                 |> List.map (fun line -> $"    %s{line}")
-//                 // Trim empty lines
-//                 |> List.map (fun line ->
-//                     if String.IsNullOrWhiteSpace line then
-//                         ""
-//                     else
-//                         line
-//                 )
-
-//             if not additionalChangelogContent.IsEmpty then
-//                 appendLine ""
-//                 additionalChangelogContent |> List.iter appendLine
-//                 appendLine ""
-
-//         newLine ()
-//     )
-
-//     newLine ()
-
-//     // TODO: Add contributors list
-//     // TODO: Add breaking changes list 🏗️ Breaking changes
-
-//     let rec removeConsecutiveEmptyLines
-//         (previousLineWasBlank: bool)
-//         (result: string list)
-//         (lines: string list)
-//         =
-//         match lines with
-//         | [] -> result
-//         | line :: rest ->
-//             // printfn $"%A{String.IsNullOrWhiteSpace(line)}"
-//             if previousLineWasBlank && String.IsNullOrWhiteSpace(line) then
-//                 removeConsecutiveEmptyLines true result rest
-//             else
-//                 removeConsecutiveEmptyLines
-//                     (String.IsNullOrWhiteSpace(line))
-//                     (result @ [ line ])
-//                     rest
-
-//     let newChangelogContent =
-//         [
-//             // Add title and description of the original changelog
-//             yield!
-//                 changelogInfo.Lines
-//                 |> Seq.takeWhile (fun line -> "<!-- EasyBuild: START -->" <> line)
-
-//             // Ad EasyBuild metadata
-//             "<!-- EasyBuild: START -->"
-//             $"<!-- last_commit_released: {releaseContext.LastCommitSha} -->"
-//             "<!-- EasyBuild: END -->"
-//             ""
-
-//             // New version
-//             yield! newVersionLines
-
-//             // Add the rest of the changelog
-//             yield! changelogInfo.Lines |> Seq.skipWhile (fun line -> not (line.StartsWith("##")))
-//         ]
-//         |> removeConsecutiveEmptyLines false []
-//         |> String.concat "\n"
-
-//     File.WriteAllText(changelogInfo.File.FullName, newChangelogContent)
+    newChangelogContent

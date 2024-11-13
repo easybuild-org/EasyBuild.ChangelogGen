@@ -350,6 +350,99 @@ This is a list of changes:
             )
         ]
 
+let private updateChangelogWithNewVersionTests =
+    testList
+        "Changelog.updateChangelogWithNewVersion"
+        [
+            testMarkdown (
+                "works if metadata was existing",
+                (fun _ ->
+                    let changelogInfo =
+                        let settings = GenerateSettings(Changelog = Workspace.``valid_changelog.md``)
+
+                        match Changelog.load settings with
+                        | Ok changelogInfo -> changelogInfo
+                        | Error _ -> failwith "Expected Ok"
+
+                    Changelog.updateWithNewVersion
+                        ChangelogGenConfig.Default
+                        {
+                            NewVersion = Semver.SemVersion(1, 1, 0)
+                            CommitsForRelease =
+                                [
+                                    Git.Commit.Create(
+                                        "0b1899bb03d3eb86a30c84aa4c66c037527fbd14",
+                                        "fix: Fix bug"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                    Git.Commit.Create(
+                                        "2a6f3b3403aaa629de6e65558448b37f126f8e86",
+                                        "fix: Fix another bug"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                    Git.Commit.Create(
+                                        "fef5f479d65172bd385b781bbed83f6eee2a32c6",
+                                        "feat: Add feature"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                    Git.Commit.Create(
+                                        "46d380257c08fe1f74e4596b8720d71a39f6e629",
+                                        "feat: Add another feature"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                ]
+                            LastCommitSha = "0b1899bb03d3eb86a30c84aa4c66c037527fbd14"
+                        }
+                        changelogInfo
+
+                )
+            )
+
+            testMarkdown (
+                "works if metadata was not existing",
+                (fun _ ->
+                    let changelogInfo =
+                        let settings = GenerateSettings(Changelog = Workspace.``valid_changelog_no_metadata.md``)
+
+                        match Changelog.load settings with
+                        | Ok changelogInfo -> changelogInfo
+                        | Error _ -> failwith "Expected Ok"
+
+                    Changelog.updateWithNewVersion
+                        ChangelogGenConfig.Default
+                        {
+                            NewVersion = Semver.SemVersion(1, 1, 0)
+                            CommitsForRelease =
+                                [
+                                    Git.Commit.Create(
+                                        "0b1899bb03d3eb86a30c84aa4c66c037527fbd14",
+                                        "fix: Fix bug"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                    Git.Commit.Create(
+                                        "2a6f3b3403aaa629de6e65558448b37f126f8e86",
+                                        "fix: Fix another bug"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                    Git.Commit.Create(
+                                        "fef5f479d65172bd385b781bbed83f6eee2a32c6",
+                                        "feat: Add feature"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                    Git.Commit.Create(
+                                        "46d380257c08fe1f74e4596b8720d71a39f6e629",
+                                        "feat: Add another feature"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                ]
+                            LastCommitSha = "0b1899bb03d3eb86a30c84aa4c66c037527fbd14"
+                        }
+                        changelogInfo
+
+                )
+            )
+        ]
+
 let tests =
     testList
         "Changelog"
@@ -357,4 +450,5 @@ let tests =
             loadTests
             tryFindAdditionalChangelogContentTests
             generateNewVersionSectionTests
+            updateChangelogWithNewVersionTests
         ]

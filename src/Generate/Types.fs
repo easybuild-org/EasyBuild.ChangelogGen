@@ -10,7 +10,7 @@ open System.Text.RegularExpressions
 type GenerateSettings() =
     inherit CommandSettings()
 
-    [<CommandOption("[changelog]")>]
+    [<CommandArgument(0, "[changelog]")>]
     [<Description("Path to the changelog file. Default is CHANGELOG.md")>]
     member val Changelog: string = "CHANGELOG.md" with get, set
 
@@ -73,6 +73,10 @@ type GenerateSettings() =
             "feat"
             "fix"
         |] with get, set
+
+    [<CommandOption("--dry-run")>]
+    [<Description("Run the command without writing to the changelog file")>]
+    member val DryRun: bool = false with get, set
 
 type CommitForRelease =
     {

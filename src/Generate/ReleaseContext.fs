@@ -83,20 +83,29 @@ let compute
             LastCommitSha = commitsCandidates[0].Hash
         }
 
+    let applyPreRelease (newVersion : SemVersion) =
+        if settings.PreRelease.IsSet then
+            newVersion.WithPrerelease(settings.PreRelease.Value)
+        else
+            newVersion.WithPrerelease("")
+
     let bumpMajor () =
         refVersion.WithMajor(refVersion.Major + 1).WithMinor(0).WithPatch(0)
+        |> applyPreRelease
         |> makeVersionBump
         |> BumpRequired
         |> Ok
 
     let bumpMinor () =
         refVersion.WithMinor(refVersion.Minor + 1).WithPatch(0)
+        |> applyPreRelease
         |> makeVersionBump
         |> BumpRequired
         |> Ok
 
     let bumpPatch () =
         refVersion.WithPatch(refVersion.Patch + 1)
+
         |> makeVersionBump
         |> BumpRequired
         |> Ok
