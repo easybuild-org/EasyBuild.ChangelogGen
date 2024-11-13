@@ -10,6 +10,10 @@ module Expect =
 
     let isNotEmpty actual = Expect.isNotEmpty actual ""
 
+    let isOk actual = Expect.isOk actual ""
+
+    let isError actual = Expect.isError actual ""
+
 type Git.Commit with
 
     static member Create

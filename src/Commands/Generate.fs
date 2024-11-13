@@ -13,17 +13,16 @@ type GenerateCommand() =
     interface ICommandLimiter<GenerateSettings>
 
     override __.Execute(context, settings) =
-
-        printfn "Setting cwd: %s" settings.Cwd
-
         let res =
             result {
                 let! config = ConfigLoader.tryLoadConfig settings.Cwd settings.Config
                 let! changelogInfo = Changelog.load settings
                 do! Verify.dirty settings
                 do! Verify.branch settings
+                do! Verify.options settings changelogInfo
+
                 let commits = ReleaseContext.getCommits settings changelogInfo
-                let! releaseContext = ReleaseContext.compute settings changelogInfo commits config.CommitParserConfig
+                let releaseContext = ReleaseContext.compute settings changelogInfo commits config.CommitParserConfig
 
                 match releaseContext with
                 | NoVersionBumpRequired -> Log.success "No version bump required."

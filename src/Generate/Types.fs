@@ -51,8 +51,9 @@ type GenerateSettings() =
     member val Tags: string array = [||] with get, set
 
     [<CommandOption("--pre-release [prefix]")>]
+    [<DefaultValue("beta")>]
     [<Description("Indicate that the generated version is a pre-release version. Optionally, you can provide a prefix for the beta version. Default is 'beta'")>]
-    member val PreRelease: FlagValue<string> = null with get, set
+    member val PreRelease: FlagValue<string> = FlagValue() with get, set
 
     [<CommandOption("--cwd")>]
     [<Description("Path to the directory where the command will be executed. Default is the current working directory")>]
@@ -99,8 +100,13 @@ type ChangelogInfo =
     {
         File: FileInfo
         Content: string
-        LastVersion: SemVersion
+        Versions: SemVersion list
     }
+
+    member this.LastVersion =
+        match List.tryHead this.Versions with
+        | Some version -> version
+        | None -> SemVersion(0, 0, 0)
 
     member this.Lines = this.Content.Replace("\r\n", "\n").Split('\n')
 

@@ -15,7 +15,6 @@
     <ItemGroup>
         <Compile Include="Log.fs" />
         <Compile Include="Types.fs" />
-        <Compile Include="LastVersionFinder.fs" />
         <Compile Include="ConfigLoader.fs" />
         <Compile Include="Git.fs" />
         <Compile Include="Generate/Types.fs" />

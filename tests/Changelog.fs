@@ -11,6 +11,59 @@ open EasyBuild.CommitParser.Types
 
 open type TestHelper
 
+let private findVersionsTests =
+    testList
+        "Changelog.findVersions"
+        [
+            test "works if no versions are found" {
+                let actual = Changelog.findVersions "Some content"
+
+                Expect.equal actual []
+            }
+
+            test "works for different type of versions syntax" {
+                let actual =
+                    Changelog.findVersions
+                        """
+## 8.0.0 - 2021-01-01
+## [7.0.0] - 2021-01-01
+## v6.0.0 - 2021-01-01
+## [v5.0.0] - 2021-01-01
+## 4.0.0
+## [3.0.0]
+## v2.0.0
+## [v1.0.0]
+"""
+
+                Expect.equal
+                    actual
+                    [
+                        Semver.SemVersion(8, 0, 0)
+                        Semver.SemVersion(7, 0, 0)
+                        Semver.SemVersion(6, 0, 0)
+                        Semver.SemVersion(5, 0, 0)
+                        Semver.SemVersion(4, 0, 0)
+                        Semver.SemVersion(3, 0, 0)
+                        Semver.SemVersion(2, 0, 0)
+                        Semver.SemVersion(1, 0, 0)
+                    ]
+            }
+
+            test "only report real versions and not similar looking strings" {
+                let actual =
+                    Changelog.findVersions
+                        """
+## 8.0.0 - 2021-01-01
+
+This is not a version: ## 8.0.0
+
+    ## 8.0.0
+"""
+
+                Expect.equal actual [ Semver.SemVersion(8, 0, 0) ]
+            }
+        ]
+
 let private loadTests =
     testList
         "Changelog.load"
@@ -358,7 +411,8 @@ let private updateChangelogWithNewVersionTests =
                 "works if metadata was existing",
                 (fun _ ->
                     let changelogInfo =
-                        let settings = GenerateSettings(Changelog = Workspace.``valid_changelog.md``)
+                        let settings =
+                            GenerateSettings(Changelog = Workspace.``valid_changelog.md``)
 
                         match Changelog.load settings with
                         | Ok changelogInfo -> changelogInfo
@@ -402,7 +456,10 @@ let private updateChangelogWithNewVersionTests =
                 "works if metadata was not existing",
                 (fun _ ->
                     let changelogInfo =
-                        let settings = GenerateSettings(Changelog = Workspace.``valid_changelog_no_metadata.md``)
+                        let settings =
+                            GenerateSettings(
+                                Changelog = Workspace.``valid_changelog_no_metadata.md``
+                            )
 
                         match Changelog.load settings with
                         | Ok changelogInfo -> changelogInfo
@@ -447,6 +504,7 @@ let tests =
     testList
         "Changelog"
         [
+            findVersionsTests
             loadTests
             tryFindAdditionalChangelogContentTests
             generateNewVersionSectionTests

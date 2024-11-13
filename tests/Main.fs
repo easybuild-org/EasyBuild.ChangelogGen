@@ -8,6 +8,7 @@ let allTests =
         ReleaseContext.tests
         Git.tests
         Changelog.tests
+        Verify.tests
     ]
 
 [<EntryPoint>]

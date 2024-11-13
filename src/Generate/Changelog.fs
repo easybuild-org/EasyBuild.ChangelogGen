@@ -7,6 +7,7 @@ open Semver
 open EasyBuild.ChangelogGen
 open EasyBuild.ChangelogGen.Types
 open EasyBuild.ChangelogGen.Generate.Types
+open System.Text.RegularExpressions
 
 [<Literal>]
 let EMPTY_CHANGELOG =
@@ -29,6 +30,25 @@ to be able to build your project when working on the first version.
 -->
 """
 
+let findVersions (content: string) =
+
+    let matches =
+        Regex.Matches(
+            content,
+            "^##\\s\\[?v?(?<version>[\\w\\d.-]+\\.[\\w\\d.-]+[a-zA-Z0-9])\\]?(\\s-\\s(?<date>\\d{4}-\\d{2}-\\d{2}))?$",
+            RegexOptions.Multiline
+        )
+
+    matches
+    |> Seq.map (fun m ->
+        let version = m.Groups.["version"].Value
+
+        match SemVersion.TryParse(version, SemVersionStyles.Strict) with
+        | true, version -> version
+        | false, _ -> failwith "Invalid version"
+    )
+    |> Seq.toList
+
 let load (settings: GenerateSettings) =
     let changelogFile = FileInfo(Path.Combine(settings.Cwd, settings.Changelog))
 
@@ -38,7 +58,7 @@ let load (settings: GenerateSettings) =
         {
             File = changelogFile
             Content = EMPTY_CHANGELOG
-            LastVersion = SemVersion(0, 0, 0)
+            Versions = []
         }
         |> Ok
 
@@ -47,20 +67,12 @@ let load (settings: GenerateSettings) =
 
         let changelogContent = File.ReadAllText(changelogFile.FullName)
 
-        let lastVersion =
-            match LastVersionFinder.tryFindLastVersion changelogContent with
-            | Ok version -> Ok version.Version
-            | Error LastVersionFinder.NoVersionFound -> Ok(SemVersion(0, 0, 0))
-            | Error error -> Error(error.ToText())
-
-        lastVersion
-        |> Result.map (fun version ->
-            {
-                File = changelogFile
-                Content = changelogContent
-                LastVersion = version
-            }
-        )
+        {
+            File = changelogFile
+            Content = changelogContent
+            Versions = findVersions changelogContent
+        }
+        |> Ok
 
 let tryFindAdditionalChangelogContent (text: string) : string list list =
     let lines = text.Replace("\r\n", "\n").Split('\n') |> Seq.toList
