@@ -50,7 +50,7 @@ let findVersions (content: string) =
     |> Seq.toList
 
 let load (settings: GenerateSettings) =
-    let changelogFile = FileInfo(Path.Combine(settings.Cwd, settings.Changelog))
+    let changelogFile = FileInfo settings.Changelog
 
     if not changelogFile.Exists then
         Log.info ($"File '{changelogFile.FullName}' does not exist, creating a new one.")

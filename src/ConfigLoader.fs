@@ -28,10 +28,10 @@ type Config =
             ChangelogGenConfig = ChangelogGenConfig.Default
         }
 
-let tryLoadConfig (cwd: string) (configFile: string option) : Result<Config, string> =
+let tryLoadConfig (configFile: string option) : Result<Config, string> =
     let configFile =
         match configFile with
-        | Some configFile -> Some <| new FileInfo(Path.Combine(cwd, configFile))
+        | Some configFile -> Some <| FileInfo configFile
         | None -> None
 
     match configFile with

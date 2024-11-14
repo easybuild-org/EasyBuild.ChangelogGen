@@ -18,14 +18,6 @@ type GenerateSettings() =
     [<Description("Path to the configuration file")>]
     member val Config: string option = None with get, set
 
-    [<CommandOption("--from")>]
-    [<Description("Start commit reference. When not provided, Changelog [bold]last_commit_released[/] metadata will be used, if not found, the [bold]first commit in HEAD[/] will be used.")>]
-    member val From: string option = None with get, set
-
-    [<CommandOption("--to")>]
-    [<Description("End commit reference. When not provided, the [bold]latest commit in HEAD[/] will be used.")>]
-    member val To: string option = None with get, set
-
     [<CommandOption("--allow-dirty")>]
     [<Description("Allow to run in a dirty repository (having not commit changes in your reporitory)")>]
     member val AllowDirty: bool = false with get, set
@@ -33,18 +25,6 @@ type GenerateSettings() =
     [<CommandOption("--allow-branch <VALUES>")>]
     [<Description("List of branches that are allowed to be used to generate the changelog. Default is 'main'")>]
     member val AllowBranch: string array = [| "main" |] with get, set
-
-    [<CommandOption("--major")>]
-    [<Description("Increment major version")>]
-    member val BumpMajor: bool = false with get, set
-
-    [<CommandOption("--minor")>]
-    [<Description("Increment minor version")>]
-    member val BumpMinor: bool = false with get, set
-
-    [<CommandOption("--patch")>]
-    [<Description("Increment patch version")>]
-    member val BumpPatch: bool = false with get, set
 
     [<CommandOption("--tag <VALUES>")>]
     [<Description("List of tags to include in the changelog")>]
@@ -54,10 +34,6 @@ type GenerateSettings() =
     [<DefaultValue("beta")>]
     [<Description("Indicate that the generated version is a pre-release version. Optionally, you can provide a prefix for the beta version. Default is 'beta'")>]
     member val PreRelease: FlagValue<string> = FlagValue() with get, set
-
-    [<CommandOption("--cwd")>]
-    [<Description("Path to the directory where the command will be executed. Default is the current working directory")>]
-    member val Cwd: string = Directory.GetCurrentDirectory() with get, set
 
     [<CommandOption("--force-version <VERSION>")>]
     [<Description("Force the version to be used in the changelog")>]
@@ -76,7 +52,7 @@ type GenerateSettings() =
         |] with get, set
 
     [<CommandOption("--dry-run")>]
-    [<Description("Run the command without writing to the changelog file")>]
+    [<Description("Run the command without writing to the changelog file, output the result in STDOUT instead")>]
     member val DryRun: bool = false with get, set
 
 type CommitForRelease =

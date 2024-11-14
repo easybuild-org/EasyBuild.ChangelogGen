@@ -28,30 +28,3 @@ let dirty (settings: GenerateSettings) =
 You can use the --allow-dirty option to allow a dirty repository."""
     else
         Ok()
-
-let options (settings: GenerateSettings) (changelog : ChangelogInfo) =
-    let bumpOptions =
-        match settings.BumpMajor, settings.BumpMinor, settings.BumpPatch with
-        | true, false, false
-        | false, true, false
-        | false, false, true ->
-            if changelog.LastVersion.IsPrerelease then
-                Error "Previous version is a pre-release version. Cannot bump major, minor, or patch version."
-            else
-                Ok ()
-        | false, false, false -> Ok ()
-        | _ -> Error "Only one of --major, --minor, or --patch can be used at a time."
-
-    let preReleaseOptions =
-        if settings.PreRelease.IsSet then
-            if settings.BumpMajor || settings.BumpMinor || settings.BumpPatch then
-                Error "Cannot use --pre-release with --major, --minor, or --patch."
-            else
-                Ok ()
-        else
-            Ok ()
-
-    result {
-        do! bumpOptions
-        do! preReleaseOptions
-    }

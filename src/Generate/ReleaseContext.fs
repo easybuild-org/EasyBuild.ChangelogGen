@@ -7,14 +7,9 @@ open EasyBuild.ChangelogGen.Generate.Types
 
 let getCommits (settings: GenerateSettings) (changelog: ChangelogInfo) =
     let commitFilter =
-        match settings.From, settings.To with
-        | Some from, Some to_ -> Git.GetCommitsFilter.Between(from, to_)
-        | Some from, None -> Git.GetCommitsFilter.From(from)
-        | None, Some to_ -> Git.GetCommitsFilter.To to_
-        | None, None ->
-            match changelog.LastReleaseCommit with
-            | Some lastReleasedCommit -> Git.GetCommitsFilter.From lastReleasedCommit
-            | None -> Git.GetCommitsFilter.All
+        match changelog.LastReleaseCommit with
+        | Some lastReleasedCommit -> Git.GetCommitsFilter.From lastReleasedCommit
+        | None -> Git.GetCommitsFilter.All
 
     Git.getCommits commitFilter
 
@@ -91,23 +86,16 @@ let computeReleaseVersion
     let bumpPatch () =
         refVersion.WithPatch(refVersion.Patch + 1).WithoutPrereleaseOrMetadata() |> Some
 
-    match settings.BumpMajor, settings.BumpMinor, settings.BumpPatch with
-    | false, false, false ->
-        if refVersion.IsPrerelease then
-            refVersion.WithoutPrereleaseOrMetadata() |> Some
-        elif shouldBumpMajor then
-            bumpMajor ()
-        elif shouldBumpMinor then
-            bumpMinor ()
-        elif shouldBumpPatch then
-            bumpPatch ()
-        else
-            None
-
-    | true, false, false -> bumpMajor ()
-    | false, true, false -> bumpMinor ()
-    | false, false, true -> bumpPatch ()
-    | _ -> failwith "Only one of --major, --minor, or --patch can be used at a time."
+    if refVersion.IsPrerelease then
+        refVersion.WithoutPrereleaseOrMetadata() |> Some
+    elif shouldBumpMajor then
+        bumpMajor ()
+    elif shouldBumpMinor then
+        bumpMinor ()
+    elif shouldBumpPatch then
+        bumpPatch ()
+    else
+        None
 
 let compute
     (settings: GenerateSettings)

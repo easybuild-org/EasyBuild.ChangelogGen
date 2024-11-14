@@ -15,11 +15,11 @@ type GenerateCommand() =
     override __.Execute(context, settings) =
         let res =
             result {
-                let! config = ConfigLoader.tryLoadConfig settings.Cwd settings.Config
+                let! config = ConfigLoader.tryLoadConfig settings.Config
                 let! changelogInfo = Changelog.load settings
                 do! Verify.dirty settings
                 do! Verify.branch settings
-                do! Verify.options settings changelogInfo
+                // do! Verify.options settings changelogInfo
 
                 let commits = ReleaseContext.getCommits settings changelogInfo
                 let releaseContext = ReleaseContext.compute settings changelogInfo commits config.CommitParserConfig
