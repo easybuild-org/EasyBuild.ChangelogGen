@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net8.0": {
+      "BlackFox.CommandLine": {
+        "type": "Direct",
+        "requested": "[1.0.0, )",
+        "resolved": "1.0.0",
+        "contentHash": "dSW7uLetl021HQXKcZd1xrXPjhsXgaJ5U4tFe64DLja1KZ2Ce6QeugHvZDvLfcPkEc1ZPRF7fWv5/T+X3ThWTA==",
+        "dependencies": {
+          "FSharp.Core": "4.2.3"
+        }
+      },
+      "EasyBuild.FileSystemProvider": {
+        "type": "Direct",
+        "requested": "[0.3.0, )",
+        "resolved": "0.3.0",
+        "contentHash": "gdVJpqcMDJm4IfmITy3MtpEn/lo9pH8PirVlENtXGX9Sdw3rCgoo9ch1TAthUseh28RcUGWwza9BmEWlrQX/Aw=="
+      },
+      "FSharp.Core": {
+        "type": "Direct",
+        "requested": "[8.0.200, )",
+        "resolved": "8.0.200",
+        "contentHash": "qnxoF3Fu0HzfOeYdrwmQOsLP1v+OtOMSIYkNVUwf6nGqWzL03Hh4r6VFCvCb54jlsgtt3WADVYkKkrgdeY5kiQ=="
+      },
+      "Semver": {
+        "type": "Direct",
+        "requested": "[2.3.0, )",
+        "resolved": "2.3.0",
+        "contentHash": "4vYo1zqn6pJ1YrhjuhuOSbIIm0CpM47grbpTJ5ABjOlfGt/EhMEM9ed4MRK5Jr6gVnntWDqOUzGeUJp68PZGjw=="
+      },
+      "SimpleExec": {
+        "type": "Direct",
+        "requested": "[12.0.0, )",
+        "resolved": "12.0.0",
+        "contentHash": "ptxlWtxC8vM6Y6e3h9ZTxBBkOWnWrm/Sa1HT+2i1xcXY3Hx2hmKDZP5RShPf8Xr9D+ivlrXNy57ktzyH8kyt+Q=="
+      },
+      "Spectre.Console.Cli": {
+        "type": "Direct",
+        "requested": "[0.49.0, )",
+        "resolved": "0.49.0",
+        "contentHash": "841g7PhuJFwoCatKKVoIRDaylmcaTxEzTzq7+rGHyVCBUqL7iOH0c5AsGnjgBMzhRDnUUWkP47Ho9WWfqMVqAA==",
+        "dependencies": {
+          "Spectre.Console": "0.49.0"
+        }
+      },
+      "EasyBuild.CommitParser": {
+        "type": "Transitive",
+        "resolved": "2.0.0",
+        "contentHash": "hplgmdQQOwnSnOIeR2HhlgHs3Jzz8XeoyZB3qnjfWJREqZX+5BIYrNorcDxiVluqu9FT9U1vinxz4gCHc7FarQ==",
+        "dependencies": {
+          "FSharp.Core": "7.0.300",
+          "FsToolkit.ErrorHandling": "4.18.0",
+          "Thoth.Json.Newtonsoft": "0.1.0"
+        }
+      },
+      "Fable.Core": {
+        "type": "Transitive",
+        "resolved": "4.1.0",
+        "contentHash": "NISAbAVGEcvH2s+vHLSOCzh98xMYx4aIadWacQdWPcQLploxpSQXLEe9SeszUBhbHa73KMiKREsH4/W3q4A4iA=="
+      },
+      "FsToolkit.ErrorHandling": {
+        "type": "Transitive",
+        "resolved": "4.18.0",
+        "contentHash": "cGtOP6lWcnLcXiLTGZLHi+8JAyuUDjGhZOmJWnZfd5aPCUIyL+DqUIwmfEGkUk3j/gpcchLDk9BNwUTc1oM30w==",
+        "dependencies": {
+          "FSharp.Core": "7.0.300"
+        }
+      },
+      "Newtonsoft.Json": {
+        "type": "Transitive",
+        "resolved": "13.0.1",
+        "contentHash": "ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A=="
+      },
+      "Spectre.Console": {
+        "type": "Transitive",
+        "resolved": "0.49.0",
+        "contentHash": "1s+hhYq5fcrqCvZhrNOPehAmCZJM6cjro85g1Qirvmm1tys+/sfFJgePCGcxr+S/nONZ/lCDTflPda3C+WlBdg=="
+      },
+      "Thoth.Json.Core": {
+        "type": "Transitive",
+        "resolved": "0.1.0",
+        "contentHash": "hIo4bdnbG2BOmCrUTHhScgn0aTnlGPQtmO0KiCklSHduEQV3r7SjwscvjjcbfXyc0nuPV6UOg05KHMUgiIeXjQ==",
+        "dependencies": {
+          "FSharp.Core": "5.0.0",
+          "Fable.Core": "4.1.0"
+        }
+      },
+      "Thoth.Json.Newtonsoft": {
+        "type": "Transitive",
+        "resolved": "0.1.0",
+        "contentHash": "i64dDASv8UY8oPNwvcF7UTLvXYL2C3PaTeNQ8s8Woy/pNTKud616//+0V858wcS2PyunVnyQeuiND4bfvMujhQ==",
+        "dependencies": {
+          "FSharp.Core": "5.0.0",
+          "Fable.Core": "4.1.0",
+          "Newtonsoft.Json": "13.0.1",
+          "Thoth.Json.Core": "0.1.0"
+        }
+      },
+      "easybuild.changeloggen": {
+        "type": "Project",
+        "dependencies": {
+          "BlackFox.CommandLine": "[1.0.0, )",
+          "EasyBuild.CommitParser": "[2.0.0, )",
+          "FSharp.Core": "[8.0.101, )",
+          "FsToolkit.ErrorHandling": "[4.18.0, )",
+          "Semver": "[2.3.0, )",
+          "SimpleExec": "[12.0.0, )",
+          "Spectre.Console.Cli": "[0.49.0, )"
+        }
+      }
+    }
+  }
+}
