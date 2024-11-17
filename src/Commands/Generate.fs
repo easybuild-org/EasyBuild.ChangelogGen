@@ -16,6 +16,9 @@ type GenerateCommand() =
         let res =
             result {
                 let! config = ConfigLoader.tryLoadConfig settings.Config
+                // Apply automatic resolution of remote config if needed
+                let! config = Verify.resolveRemoteConfig config
+
                 let! changelogInfo = Changelog.load settings
                 do! Verify.dirty settings
                 do! Verify.branch settings

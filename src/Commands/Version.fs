@@ -10,14 +10,17 @@ type VersionCommand() =
     inherit Command<VersionSettings>()
     interface ICommandLimiter<VersionSettings>
 
-    override __.Execute(context, settings) =
+    override __.Execute(_, _) =
         let assembly = Assembly.GetEntryAssembly()
-        let versionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+
+        let versionAttribute =
+            assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+
         let version =
             if versionAttribute <> null then
                 versionAttribute.InformationalVersion
             else
                 "?"
 
-        Log.info($"Version: {version}")
+        Log.info ($"Version: {version}")
         0

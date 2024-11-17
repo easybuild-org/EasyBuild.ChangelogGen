@@ -6,6 +6,7 @@
         <RollForward>Major</RollForward>
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>changelog-gen</ToolCommandName>
+        <ChangelogFile>$(MSBuildThisFileDirectory)../CHANGELOG.md</ChangelogFile>
     </PropertyGroup>
     <ItemGroup>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
@@ -29,6 +30,10 @@
     <ItemGroup>
         <PackageReference Include="BlackFox.CommandLine" />
         <PackageReference Include="EasyBuild.CommitParser" />
+        <PackageReference Include="EasyBuild.PackageReleaseNotes.Tasks">
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+          <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
         <PackageReference Include="FsToolkit.ErrorHandling" />
         <PackageReference Include="Semver" />
         <PackageReference Include="SimpleExec" />

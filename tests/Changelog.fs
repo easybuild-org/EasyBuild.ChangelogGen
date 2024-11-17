@@ -156,7 +156,7 @@ This goes into the changelog as well
             }
         ]
 
-let gitCommitToCommitForRelease (commit: Git.Commit) =
+let private gitCommitToCommitForRelease (commit: Git.Commit) =
     {
         OriginalCommit = commit
         SemanticCommit =
@@ -164,6 +164,16 @@ let gitCommitToCommitForRelease (commit: Git.Commit) =
             |> function
                 | Ok semanticCommit -> semanticCommit
                 | Error error -> failwith error
+    }
+
+let private defaultConfigWithRemote =
+    { ChangelogGenConfig.Default with
+        Github =
+            {
+                Owner = "owner"
+                Repository = "repository"
+            }
+            |> Some
     }
 
 let private generateNewVersionSectionTests =
@@ -174,7 +184,7 @@ let private generateNewVersionSectionTests =
                 "works for feat type commit",
                 (fun _ ->
                     Changelog.generateNewVersionSection
-                        ChangelogGenConfig.Default
+                        defaultConfigWithRemote
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -199,7 +209,7 @@ let private generateNewVersionSectionTests =
                 "works for fix type commit",
                 (fun _ ->
                     Changelog.generateNewVersionSection
-                        ChangelogGenConfig.Default
+                        defaultConfigWithRemote
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -224,7 +234,7 @@ let private generateNewVersionSectionTests =
                 "breaking change are going into their own section if configured",
                 (fun _ ->
                     Changelog.generateNewVersionSection
-                        ChangelogGenConfig.Default
+                        defaultConfigWithRemote
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -265,6 +275,7 @@ let private generateNewVersionSectionTests =
                                     Owner = "owner"
                                     Repository = "repository"
                                 }
+                                |> Some
                             Groups =
                                 [
                                     {
@@ -319,6 +330,7 @@ let private generateNewVersionSectionTests =
                                     Owner = "owner"
                                     Repository = "repository"
                                 }
+                                |> Some
                             Groups =
                                 [
                                     {
@@ -367,7 +379,7 @@ let private generateNewVersionSectionTests =
                 "include changelog additional data when present",
                 (fun _ ->
                     Changelog.generateNewVersionSection
-                        ChangelogGenConfig.Default
+                        defaultConfigWithRemote
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -419,7 +431,7 @@ let private updateChangelogWithNewVersionTests =
                         | Error _ -> failwith "Expected Ok"
 
                     Changelog.updateWithNewVersion
-                        ChangelogGenConfig.Default
+                        defaultConfigWithRemote
                         {
                             NewVersion = Semver.SemVersion(1, 1, 0)
                             CommitsForRelease =
@@ -466,7 +478,7 @@ let private updateChangelogWithNewVersionTests =
                         | Error _ -> failwith "Expected Ok"
 
                     Changelog.updateWithNewVersion
-                        ChangelogGenConfig.Default
+                        defaultConfigWithRemote
                         {
                             NewVersion = Semver.SemVersion(1, 1, 0)
                             CommitsForRelease =

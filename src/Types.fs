@@ -1,9 +1,6 @@
 module EasyBuild.ChangelogGen.Types
 
 open Thoth.Json.Core
-open Semver
-open System.IO
-open System.Text.RegularExpressions
 
 type BumpRule =
     | Major
@@ -53,25 +50,21 @@ type GithubRemoteConfig =
 
 type ChangelogGenConfig =
     {
-        Github: GithubRemoteConfig
+        Github: GithubRemoteConfig option
         Groups: Groups list
     }
 
     static member Decoder: Decoder<ChangelogGenConfig> =
         Decode.object (fun get ->
             {
-                Github = get.Required.Field "github" GithubRemoteConfig.Decoder
+                Github = get.Optional.Field "github" GithubRemoteConfig.Decoder
                 Groups = get.Required.Field "groups" (Decode.list Groups.Decoder)
             }
         )
 
     static member Default =
         {
-            Github =
-                {
-                    Owner = "owner"
-                    Repository = "repository"
-                }
+            Github = None
             Groups =
                 [
                     {

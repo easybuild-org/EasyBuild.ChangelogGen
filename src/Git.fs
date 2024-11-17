@@ -1,6 +1,7 @@
 [<RequireQualifiedAccess>]
 module Git
 
+open System
 open SimpleExec
 open BlackFox.CommandLine
 open Thoth.Json.Core
@@ -107,3 +108,83 @@ let getCommits (filter: GetCommitsFilter) =
     |> Array.filter (fun x -> x.Length > 0)
     |> Array.map readCommit
     |> Array.toList
+
+type Remote =
+    {
+        Owner: string
+        Repository: string
+    }
+
+let private stripSuffix (suffix: string) (str: string) =
+    if str.EndsWith(suffix) then
+        str.Substring(0, str.Length - suffix.Length)
+    else
+        str
+
+// Url needs to be in the format:
+// https://hostname/owner/repo.git
+let tryGetRemoteFromUrl (url: string) =
+    let normalizedUrl = url |> stripSuffix ".git"
+
+    match Uri.TryCreate(normalizedUrl, UriKind.Absolute) with
+    | true, uri ->
+        let segments =
+            uri.Segments
+            |> Seq.map _.Trim('/')
+            |> Seq.filter (String.IsNullOrEmpty >> not)
+            |> Seq.toList
+
+        if segments.Length < 2 then
+            None
+        else
+            let owner = segments.[segments.Length - 2]
+            let repo = segments.[segments.Length - 1]
+
+            Some
+                {
+                    Owner = owner.Trim('/')
+                    Repository = repo.Trim('/')
+                }
+    | false, _ -> None
+
+let tryGetRemoteFromSSH (url: string) =
+    // Naive way to check the format
+    if url.Contains("@") && url.Contains(":") && url.Contains("/") then
+        let segments =
+            // Remove the .git extension and split the url
+            url |> stripSuffix ".git" |> _.Split(':') |> Seq.toList
+
+        match segments with
+        | _ :: owner_repo :: _ ->
+            let segments = owner_repo.Split('/') |> Array.rev |> Array.toList
+
+            match segments with
+            | repo :: owner :: _ ->
+                Some
+                    {
+                        Owner = owner
+                        Repository = repo
+                    }
+            | _ -> None
+        | _ -> None
+    else
+        None
+
+let tryFindRemote () =
+
+    let struct (remoteStdout, _) =
+        Command.ReadAsync(
+            "git",
+            CmdLine.empty
+            |> CmdLine.appendRaw "config"
+            |> CmdLine.appendPrefix "--get" "remote.origin.url"
+            |> CmdLine.toString
+        )
+        |> Async.AwaitTask
+        |> Async.RunSynchronously
+
+    let remoteUrl = remoteStdout.Trim()
+
+    match tryGetRemoteFromUrl remoteUrl with
+    | Some remote -> Some remote
+    | None -> tryGetRemoteFromSSH remoteUrl
