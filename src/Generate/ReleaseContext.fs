@@ -13,89 +13,114 @@ let getCommits (settings: GenerateSettings) (changelog: ChangelogInfo) =
 
     Git.getCommits commitFilter
 
-let computePreReleaseVersion (settings: GenerateSettings) (refVersion: SemVersion) =
-    // Try to normalize pre-release identifier
-    let preReleaseIdentifier = settings.PreRelease.Value.Trim('-')
-
-    // If previous version is a release, then start a new pre-release from 1 and by incrementing the major version
-    // Before: 1.0.0 -> After: 2.0.0-beta.1
-    if refVersion.IsRelease then
-        refVersion
-            .WithMajor(refVersion.Major + 1)
-            .WithMinor(0)
-            .WithPatch(0)
-            .WithPrereleaseParsedFrom(preReleaseIdentifier + ".1")
-    // If the last version is a pre-release of the same identifier, then increment the pre-release number
-    // Before: 2.0.0-beta.1 -> After: 2.0.0-beta.2
-    else if refVersion.Prerelease.StartsWith(preReleaseIdentifier) then
-        let index = refVersion.Prerelease.IndexOf(preReleaseIdentifier + ".")
-
-        if index >= 0 then
-            let preReleaseNumber =
-                refVersion.Prerelease.Substring(index + preReleaseIdentifier.Length + 1) |> int
-
-            refVersion.WithPrereleaseParsedFrom(
-                preReleaseIdentifier + "." + (preReleaseNumber + 1).ToString()
-            )
-        else
-            // This should never happen
-            // If the pre-release identifier is present, then the pre-release number should also be present
-            // If the pre-release identifier is not present, then the version should be a release
-            // So, this is a safe assumption
-            failwith "Invalid pre-release identifier"
-
-    // Otherwise, start a new pre-release from 1
-    // This can happens when moving from alpha to beta, for example
-    // Before: 2.0.0-alpha.1 -> After: 2.0.0-beta.1
-    else
-        refVersion.WithPrereleaseParsedFrom(preReleaseIdentifier + ".1")
-
-let computeReleaseVersion
+let computeVersion
     (settings: GenerateSettings)
     (commitsForRelease: CommitForRelease list)
     (refVersion: SemVersion)
     =
 
-    let shouldBumpMajor =
-        commitsForRelease
-        |> List.exists (fun commit -> commit.SemanticCommit.BreakingChange)
-
-    let shouldBumpMinor =
-        commitsForRelease
-        |> List.exists (fun commit -> commit.SemanticCommit.Type = "feat")
-
-    let shouldBumpPatch =
-        commitsForRelease
-        |> List.exists (fun commit -> commit.SemanticCommit.Type = "fix")
-
-    let bumpMajor () =
-        refVersion
-            .WithMajor(refVersion.Major + 1)
-            .WithMinor(0)
-            .WithPatch(0)
-            .WithoutPrereleaseOrMetadata()
-        |> Some
-
-    let bumpMinor () =
-        refVersion
-            .WithMinor(refVersion.Minor + 1)
-            .WithPatch(0)
-            .WithoutPrereleaseOrMetadata()
-        |> Some
-
-    let bumpPatch () =
-        refVersion.WithPatch(refVersion.Patch + 1).WithoutPrereleaseOrMetadata() |> Some
-
     if refVersion.IsPrerelease then
-        refVersion.WithoutPrereleaseOrMetadata() |> Some
-    elif shouldBumpMajor then
-        bumpMajor ()
-    elif shouldBumpMinor then
-        bumpMinor ()
-    elif shouldBumpPatch then
-        bumpPatch ()
+        if settings.PreRelease.IsSet then
+
+            // If the pre-release identifier is the same, then increment the pre-release number
+            // Before: 2.0.0-beta.1 -> After: 2.0.0-beta.2
+            if refVersion.Prerelease.StartsWith(settings.PreRelease.Value) then
+                let index = refVersion.Prerelease.IndexOf(settings.PreRelease.Value + ".")
+
+                if index >= 0 then
+                    let preReleaseNumber =
+                        refVersion.Prerelease.Substring(
+                            index + settings.PreRelease.Value.Length + 1
+                        )
+                        |> int
+
+                    refVersion.WithPrereleaseParsedFrom(
+                        settings.PreRelease.Value + "." + (preReleaseNumber + 1).ToString()
+                    )
+                    |> Some
+                else
+                    // This should never happen
+                    // If the pre-release identifier is present, then the pre-release number should also be present
+                    // If the pre-release identifier is not present, then the version should be a release
+                    // So, this should be a safe assumption
+                    failwith "Invalid pre-release identifier"
+            // Otherwise, start a new pre-release from 1
+            // This can happens when moving from alpha to beta, for example
+            // Before: 2.0.0-alpha.1 -> After: 2.0.0-beta.1
+            else
+                refVersion.WithPrereleaseParsedFrom(settings.PreRelease.Value + ".1") |> Some
+        // If the last version is a release, and user requested a stable release
+        // Then, remove the pre-release identifier
+        // Example: 2.0.0-beta.1 -> 2.0.0
+        else
+            refVersion.WithoutPrereleaseOrMetadata() |> Some
+
     else
-        None
+        let shouldBumpMajor =
+            commitsForRelease
+            |> List.exists (fun commit -> commit.SemanticCommit.BreakingChange)
+
+        let shouldBumpMinor =
+            commitsForRelease
+            |> List.exists (fun commit -> commit.SemanticCommit.Type = "feat")
+
+        let shouldBumpPatch =
+            commitsForRelease
+            |> List.exists (fun commit -> commit.SemanticCommit.Type = "fix")
+
+        let bumpMajor () =
+            refVersion
+                .WithMajor(refVersion.Major + 1)
+                .WithMinor(0)
+                .WithPatch(0)
+                .WithoutPrereleaseOrMetadata()
+
+        let bumpMinor () =
+            refVersion
+                .WithMinor(refVersion.Minor + 1)
+                .WithPatch(0)
+                .WithoutPrereleaseOrMetadata()
+
+        let bumpPatch () =
+            refVersion.WithPatch(refVersion.Patch + 1).WithoutPrereleaseOrMetadata()
+
+        // If the last version is a release, and user requested a pre-release
+        // Then we compute the standard release version and add the pre-release identifier starting from 1
+        // Example:
+        // - Major bump needed: 2.0.0 -> 3.0.0-beta.1
+        // - Minor bump needed: 2.0.0 -> 2.1.0-beta.1
+        // - Patch bump needed: 2.0.0 -> 2.0.1-beta.1
+        if settings.PreRelease.IsSet then
+            let applyPreReleaseIdentifier (version: SemVersion) =
+                version.WithPrereleaseParsedFrom(settings.PreRelease.Value + ".1")
+
+            if shouldBumpMajor then
+                bumpMajor () |> applyPreReleaseIdentifier |> Some
+            elif shouldBumpMinor then
+                bumpMinor () |> applyPreReleaseIdentifier |> Some
+            elif shouldBumpPatch then
+                bumpPatch () |> applyPreReleaseIdentifier |> Some
+            else
+                None
+
+        // If the last version is a release, and user requested a stable release
+        // Then we compute the standard release version
+        // Example:
+        // - Major bump needed: 2.0.0 -> 3.0.0
+        // - Minor bump needed: 2.0.0 -> 2.1.0
+        // - Patch bump needed: 2.0.0 -> 2.0.1
+        else
+            let removePreReleaseIdentifier (version: SemVersion) =
+                version.WithoutPrereleaseOrMetadata()
+
+            if shouldBumpMajor then
+                bumpMajor () |> removePreReleaseIdentifier |> Some
+            elif shouldBumpMinor then
+                bumpMinor () |> removePreReleaseIdentifier |> Some
+            elif shouldBumpPatch then
+                bumpPatch () |> removePreReleaseIdentifier |> Some
+            else
+                None
 
 let compute
     (settings: GenerateSettings)
@@ -122,9 +147,11 @@ let compute
                 else
                     failwith error
         )
-        // Only include commits that have the types we are looking for
-        |> List.filter (fun commits ->
-            settings.CommitTypes |> Array.contains commits.SemanticCommit.Type
+        // Only include commits that have the type feat, fix or is marked as a breaking change
+        |> List.filter (fun commit ->
+            commit.SemanticCommit.Type = "feat"
+            || commit.SemanticCommit.Type = "fix"
+            || commit.SemanticCommit.BreakingChange
         )
         // Only keep the commits that have the tags we are looking for
         // or all commits if no tags are provided
@@ -135,9 +162,9 @@ let compute
             else
                 settings.Tags
                 |> Array.exists (fun searchedTag ->
-                    match commit.SemanticCommit.Tags with
+                    match Map.tryFind "Tag" commit.SemanticCommit.Footers with
+                    | Some tags -> tags |> List.contains searchedTag
                     | None -> false
-                    | Some commitTags -> commitTags |> List.contains searchedTag
                 )
         )
 
@@ -158,9 +185,6 @@ let compute
         |> BumpRequired
 
     | None ->
-        if settings.PreRelease.IsSet then
-            computePreReleaseVersion settings refVersion |> makeBumpInfo |> BumpRequired
-        else
-            match computeReleaseVersion settings commitsForRelease refVersion with
-            | Some newVersion -> makeBumpInfo newVersion |> BumpRequired
-            | None -> NoVersionBumpRequired
+        match computeVersion settings commitsForRelease refVersion with
+        | Some newVersion -> makeBumpInfo newVersion |> BumpRequired
+        | None -> NoVersionBumpRequired

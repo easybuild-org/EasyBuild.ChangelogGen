@@ -59,8 +59,6 @@ type GetCommitsFilter =
     | All
     | From of string
 
-// |> CmdLine.appendRaw "--format=\"{\n  \\\"hash\\\": \\\"%H\\\",\\\"abbrev_hash\\\": \\\"%h\\\",\n  \\\"author\\\": \\\"%an\\\",\n  \\\"short_message\\\": \\\"%s\\\",\n  \\\"long_message\\\": \\\"%B\\\"\n}\""
-
 let readCommit (sha1: string) =
     let struct (commitStdout, _) =
         Command.ReadAsync(

@@ -210,7 +210,7 @@
         "type": "Project",
         "dependencies": {
           "BlackFox.CommandLine": "[1.0.0, )",
-          "EasyBuild.CommitParser": "[1.2.0, )",
+          "EasyBuild.CommitParser": "[2.0.0, )",
           "FSharp.Core": "[8.0.101, )",
           "FsToolkit.ErrorHandling": "[4.18.0, )",
           "Semver": "[2.3.0, )",
@@ -229,9 +229,9 @@
       },
       "EasyBuild.CommitParser": {
         "type": "CentralTransitive",
-        "requested": "[1.2.0, )",
-        "resolved": "1.2.0",
-        "contentHash": "HRbWin3lU/7zZ3/Tm0pRje4IHyxkLfkJ6icTkkOSZyAl2ue/gDCh8q4Wbj7T/57JJlGvHwjd0cqjqnX70tZqZw==",
+        "requested": "[2.0.0, )",
+        "resolved": "2.0.0",
+        "contentHash": "hplgmdQQOwnSnOIeR2HhlgHs3Jzz8XeoyZB3qnjfWJREqZX+5BIYrNorcDxiVluqu9FT9U1vinxz4gCHc7FarQ==",
         "dependencies": {
           "FSharp.Core": "7.0.300",
           "FsToolkit.ErrorHandling": "4.18.0",

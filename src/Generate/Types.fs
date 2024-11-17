@@ -43,14 +43,6 @@ type GenerateSettings() =
     [<Description("Skip invalid commits instead of failing")>]
     member val SkipInvalidCommit: bool = true with get, set
 
-    [<CommandOption("--commit-type <TYPES>")>]
-    [<Description("List of commit types to include in the changelog")>]
-    member val CommitTypes: string array =
-        [|
-            "feat"
-            "fix"
-        |] with get, set
-
     [<CommandOption("--dry-run")>]
     [<Description("Run the command without writing to the changelog file, output the result in STDOUT instead")>]
     member val DryRun: bool = false with get, set
