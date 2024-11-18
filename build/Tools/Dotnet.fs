@@ -37,7 +37,3 @@ type Nuget =
                 $"""Failed to find nupkg path in output:
 Output:
 {standardOutput}"""
-
-type DotNet =
-
-    static member ChangelogGen _ = failwith "Not implemented"
