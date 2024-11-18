@@ -26,7 +26,12 @@ type ReleaseCommand() =
         let (struct (newVersion, _)) =
             Command.ReadAsync(
                 "dotnet",
-                CmdLine.empty |> CmdLine.appendRaw "changelog-gen" |> CmdLine.toString,
+                CmdLine.empty
+                |> CmdLine.appendRaw "run"
+                |> CmdLine.appendPrefix "--project" Workspace.src.``EasyBuild.ChangelogGen.fsproj``
+                |> CmdLine.appendRaw "--"
+                |> CmdLine.appendSeq context.Remaining.Raw
+                |> CmdLine.toString,
                 workingDirectory = Workspace.``.``
             )
             |> Async.AwaitTask

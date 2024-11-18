@@ -193,3 +193,9 @@ Then I can run `dotnet changelog-gen src/converter/CHANGELOG.md --tag converter`
 ```bash
 dotnet changelog-gen src/converter/CHANGELOG.md --tag converter
 ```
+
+## Exits codes
+
+- `0`: Success
+- `1`: Error
+- `100`: Help was requested (allow other tools to detect if help was requested). This is left to the user to decide if they want to treat this as an error or not.
