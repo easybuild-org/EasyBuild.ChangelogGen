@@ -178,6 +178,7 @@ let private generateNewVersionSectionTests =
                             Owner = "owner"
                             Repository = "repository"
                         }
+                        (Some "fefd5e0bf242e034f86ad23a886e2d71ded4f7bb")
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -206,6 +207,7 @@ let private generateNewVersionSectionTests =
                             Owner = "owner"
                             Repository = "repository"
                         }
+                        (Some "fefd5e0bf242e034f86ad23a886e2d71ded4f7bb")
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -234,6 +236,7 @@ let private generateNewVersionSectionTests =
                             Owner = "owner"
                             Repository = "repository"
                         }
+                        (Some "fefd5e0bf242e034f86ad23a886e2d71ded4f7bb")
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -272,6 +275,7 @@ let private generateNewVersionSectionTests =
                             Owner = "owner"
                             Repository = "repository"
                         }
+                        (Some "fefd5e0bf242e034f86ad23a886e2d71ded4f7bb")
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -310,6 +314,7 @@ let private generateNewVersionSectionTests =
                             Owner = "owner"
                             Repository = "repository"
                         }
+                        (Some "fefd5e0bf242e034f86ad23a886e2d71ded4f7bb")
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -348,6 +353,7 @@ let private generateNewVersionSectionTests =
                             Owner = "owner"
                             Repository = "repository"
                         }
+                        (Some "fefd5e0bf242e034f86ad23a886e2d71ded4f7bb")
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -374,6 +380,79 @@ This is a list of changes:
                                     Git.Commit.Create(
                                         "2a6f3b3403aaa629de6e65558448b37f126f8e86",
                                         "fix: Fix bug"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                ]
+                            LastCommitSha = "0b1899bb03d3eb86a30c84aa4c66c037527fbd14"
+                        }
+                )
+            )
+
+            testMarkdown (
+                "compare link is not generated if no previous release sha is provided",
+                (fun _ ->
+                    Changelog.generateNewVersionSection
+                        {
+                            Owner = "owner"
+                            Repository = "repository"
+                        }
+                        None
+                        {
+                            NewVersion = Semver.SemVersion(1, 0, 0)
+                            CommitsForRelease =
+                                [
+                                    Git.Commit.Create(
+                                        "0b1899bb03d3eb86a30c84aa4c66c037527fbd14",
+                                        "feat: Add feature"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                    Git.Commit.Create(
+                                        "2a6f3b3403aaa629de6e65558448b37f126f8e86",
+                                        "feat: Add another feature"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                ]
+                            LastCommitSha = "0b1899bb03d3eb86a30c84aa4c66c037527fbd14"
+                        }
+                )
+            )
+
+            testMarkdown (
+                "commits are ordered by scope",
+                (fun _ ->
+                    Changelog.generateNewVersionSection
+                        {
+                            Owner = "owner"
+                            Repository = "repository"
+                        }
+                        None
+                        {
+                            NewVersion = Semver.SemVersion(1, 0, 0)
+                            CommitsForRelease =
+                                [
+                                    Git.Commit.Create(
+                                        "0b1899bb03d3eb86a30c84aa4c66c037527fbd14",
+                                        "feat(js): Add feature #2"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                    Git.Commit.Create(
+                                        "21033aae357447dbfac30557a2dee0c4b5b03f68",
+                                        "feat(js): Add feature #1"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                    Git.Commit.Create(
+                                        "be429a973ac2f6d1c009b7efcd15360c9e585450",
+                                        "feat(js): JavaScript is awesome"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                    Git.Commit.Create(
+                                        "2a6f3b3403aaa629de6e65558448b37f126f8e86",
+                                        "feat(rust): Rust is awesome"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                    Git.Commit.Create(
+                                        "2a6f3b3403aaa629de6e65558448b37f126f8e86",
+                                        "feat(all): All Fable targets are awesome"
                                     )
                                     |> gitCommitToCommitForRelease
                                 ]

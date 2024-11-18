@@ -10,7 +10,7 @@ This changelog is generated using [EasyBuild.ChangelogGen](https://github.com/ea
 <!-- last_commit_released: 0b1899bb03d3eb86a30c84aa4c66c037527fbd14 -->
 <!-- EasyBuild: END -->
 
-## 1.1.0
+## 1.1.0 - 2024-11-18
 
 ### 🚀 Features
 

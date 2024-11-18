@@ -140,6 +140,8 @@ let private writeSection
         writer.AppendLine $"### %s{label}"
         writer.NewLine()
 
+        let commits = commits |> List.sortBy (fun commit -> commit.SemanticCommit.Scope)
+
         for commit in commits do
             let githubCommitUrl sha =
                 $"https://github.com/%s{githubRemote.Owner}/%s{githubRemote.Repository}/commit/%s{sha}"
@@ -148,7 +150,14 @@ let private writeSection
 
             let description = capitalizeFirstLetter commit.SemanticCommit.Description
 
-            $"* %s{description} ([%s{commit.OriginalCommit.AbbrevHash}](%s{commitUrl}))"
+            [
+                "*"
+                match commit.SemanticCommit.Scope with
+                | Some scope -> $"*(%s{scope})*"
+                | None -> ()
+                $"%s{description.Trim()} ([%s{commit.OriginalCommit.AbbrevHash}](%s{commitUrl}))"
+            ]
+            |> String.concat " "
             |> writer.AppendLine
 
             let additionalChangelogContent =
@@ -162,10 +171,22 @@ let private writeSection
 
         writer.NewLine()
 
-let generateNewVersionSection (githubRemote: GithubRemoteConfig) (releaseContext: BumpInfo) =
+let generateNewVersionSection
+    (githubRemote: GithubRemoteConfig)
+    (previousReleasedSha: string option)
+    (releaseContext: BumpInfo)
+    =
     let writer = Writer()
 
-    writer.AppendLine $"## %s{releaseContext.NewVersion.ToString()}"
+    [
+        "##"
+        $"%s{releaseContext.NewVersion.ToString()}"
+        "-"
+        DateTime.UtcNow.ToString("yyyy-MM-dd")
+    ]
+    |> String.concat " "
+    |> writer.AppendLine
+
     writer.NewLine()
 
     let rec groupCommits (acc: GroupedCommits) (commits: CommitForRelease list) =
@@ -194,6 +215,18 @@ let generateNewVersionSection (githubRemote: GithubRemoteConfig) (releaseContext
     writeSection writer "🚀 Features" githubRemote groupedCommits.Feats
     writeSection writer "🐞 Bug Fixes" githubRemote groupedCommits.Fixes
 
+    match previousReleasedSha with
+    | Some sha ->
+        let compareUrl =
+            $"https://github.com/%s{githubRemote.Owner}/%s{githubRemote.Repository}/compare/%s{sha}..%s{releaseContext.LastCommitSha}"
+
+        $"<strong><small>[View changes on Github](%s{compareUrl})</small></strong>"
+        |> writer.AppendLine
+
+        writer.NewLine()
+
+    | None -> ()
+
     writer.ToText()
 
 let updateWithNewVersion
@@ -201,7 +234,8 @@ let updateWithNewVersion
     (releaseContext: BumpInfo)
     (changelogInfo: ChangelogInfo)
     =
-    let newVersionLines = generateNewVersionSection githubRemote releaseContext
+    let newVersionLines =
+        generateNewVersionSection githubRemote changelogInfo.LastReleaseCommit releaseContext
 
     let rec removeConsecutiveEmptyLines
         (previousLineWasBlank: bool)
