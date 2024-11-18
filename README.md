@@ -194,7 +194,7 @@ Then I can run `dotnet changelog-gen src/converter/CHANGELOG.md --tag converter`
 dotnet changelog-gen src/converter/CHANGELOG.md --tag converter
 ```
 
-## Exits codes
+## Exit codes
 
 - `0`: Success
 - `1`: Error
