@@ -29,35 +29,29 @@ You can use the --allow-dirty option to allow a dirty repository."""
     else
         Ok()
 
-let resolveRemoteConfig (config: ConfigLoader.Config) =
-    match config.ChangelogGenConfig.Github with
-    | Some _ -> Ok config
+let resolveRemoteConfig (settings: GenerateSettings) =
+    match settings.GitHubRepo with
+    | Some githubRepo ->
+        let segments = githubRepo.Split('/') |> Array.toList
+
+        match segments with
+        | [ owner; repo ] ->
+            ({
+                Owner = owner
+                Repository = repo
+            }
+            : Types.GithubRemoteConfig)
+            |> Ok
+        | _ ->
+            Error $"""Invalid format for --github-repo option, expected format is 'owner/repo'."""
+
     | None ->
         match Git.tryFindRemote () with
-        | Some remote ->
-            Ok
-                { config with
-                    ChangelogGenConfig.Github =
-                        Some
-                            {
-                                Owner = remote.Owner
-                                Repository = remote.Repository
-                            }
-                }
-        | None ->
-            Error
-                """Could not resolve the remote repository.
-
-Automatic detection expected URL returned by `git config --get remote.origin.url` to be of the form 'https://hostname/owner/repo.git' or 'git@hostname:owner/repo.git'.
-
-You can also provide the Github owner and repository in the configuration file:
-
-```json
-{
-    "changelog-gen": {
-        "github": {
-            "owner": "owner",
-            "repository": "repo"
-        }
-    }
-}"""
+        | Ok remote ->
+            ({
+                Owner = remote.Owner
+                Repository = remote.Repository
+            }
+            : Types.GithubRemoteConfig)
+            |> Ok
+        | Error error -> Error error

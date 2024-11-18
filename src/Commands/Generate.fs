@@ -17,7 +17,7 @@ type GenerateCommand() =
             result {
                 let! config = ConfigLoader.tryLoadConfig settings.Config
                 // Apply automatic resolution of remote config if needed
-                let! config = Verify.resolveRemoteConfig config
+                let! remoteConfig = Verify.resolveRemoteConfig settings
 
                 let! changelogInfo = Changelog.load settings
                 do! Verify.dirty settings
@@ -33,10 +33,7 @@ type GenerateCommand() =
                 | NoVersionBumpRequired -> Log.success "No version bump required."
                 | BumpRequired bumpInfo ->
                     let newChangelogContent =
-                        Changelog.updateWithNewVersion
-                            config.ChangelogGenConfig
-                            bumpInfo
-                            changelogInfo
+                        Changelog.updateWithNewVersion remoteConfig bumpInfo changelogInfo
 
                     if settings.DryRun then
                         Log.info "Dry run enabled, not writing to file."

@@ -186,5 +186,14 @@ let tryFindRemote () =
     let remoteUrl = remoteStdout.Trim()
 
     match tryGetRemoteFromUrl remoteUrl with
-    | Some remote -> Some remote
-    | None -> tryGetRemoteFromSSH remoteUrl
+    | Some remote -> Ok remote
+    | None ->
+        match tryGetRemoteFromSSH remoteUrl with
+        | Some remote -> Ok remote
+        | None ->
+            Error
+                """Could not resolve the remote repository.
+
+Automatic detection expects URL returned by `git config --get remote.origin.url` to be of the form 'https://hostname/owner/repo.git' or 'git@hostname:owner/repo.git'.
+
+You can use the --github-repo option to specify the repository manually."""

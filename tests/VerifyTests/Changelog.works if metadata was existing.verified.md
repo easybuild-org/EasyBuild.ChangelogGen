@@ -14,13 +14,13 @@ This changelog is generated using [EasyBuild.ChangelogGen](https://github.com/ea
 
 ### 🚀 Features
 
-* Add feature ([fef5f47](https://github.com/owner/repository/commit/fef5f479d65172bd385b781bbed83f6eee2a32c6))
 * Add another feature ([46d3802](https://github.com/owner/repository/commit/46d380257c08fe1f74e4596b8720d71a39f6e629))
+* Add feature ([fef5f47](https://github.com/owner/repository/commit/fef5f479d65172bd385b781bbed83f6eee2a32c6))
 
 ### 🐞 Bug Fixes
 
-* Fix bug ([0b1899b](https://github.com/owner/repository/commit/0b1899bb03d3eb86a30c84aa4c66c037527fbd14))
 * Fix another bug ([2a6f3b3](https://github.com/owner/repository/commit/2a6f3b3403aaa629de6e65558448b37f126f8e86))
+* Fix bug ([0b1899b](https://github.com/owner/repository/commit/0b1899bb03d3eb86a30c84aa4c66c037527fbd14))
 
 ## 1.0.0
 

@@ -166,16 +166,6 @@ let private gitCommitToCommitForRelease (commit: Git.Commit) =
                 | Error error -> failwith error
     }
 
-let private defaultConfigWithRemote =
-    { ChangelogGenConfig.Default with
-        Github =
-            {
-                Owner = "owner"
-                Repository = "repository"
-            }
-            |> Some
-    }
-
 let private generateNewVersionSectionTests =
     testList
         "Changelog.generateNewVersionSection"
@@ -184,7 +174,10 @@ let private generateNewVersionSectionTests =
                 "works for feat type commit",
                 (fun _ ->
                     Changelog.generateNewVersionSection
-                        defaultConfigWithRemote
+                        {
+                            Owner = "owner"
+                            Repository = "repository"
+                        }
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -209,7 +202,10 @@ let private generateNewVersionSectionTests =
                 "works for fix type commit",
                 (fun _ ->
                     Changelog.generateNewVersionSection
-                        defaultConfigWithRemote
+                        {
+                            Owner = "owner"
+                            Repository = "repository"
+                        }
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -234,7 +230,10 @@ let private generateNewVersionSectionTests =
                 "breaking change are going into their own section if configured",
                 (fun _ ->
                     Changelog.generateNewVersionSection
-                        defaultConfigWithRemote
+                        {
+                            Owner = "owner"
+                            Repository = "repository"
+                        }
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -270,25 +269,8 @@ let private generateNewVersionSectionTests =
                 (fun _ ->
                     Changelog.generateNewVersionSection
                         {
-                            Github =
-                                {
-                                    Owner = "owner"
-                                    Repository = "repository"
-                                }
-                                |> Some
-                            Groups =
-                                [
-                                    {
-                                        Type = "feat"
-                                        Bump = Minor
-                                        Group = "🚀 Features"
-                                    }
-                                    {
-                                        Type = "fix"
-                                        Bump = Patch
-                                        Group = "🐞 Bug Fixes"
-                                    }
-                                ]
+                            Owner = "owner"
+                            Repository = "repository"
                         }
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
@@ -321,29 +303,12 @@ let private generateNewVersionSectionTests =
             )
 
             testMarkdown (
-                "only commit with a configured group are included in the changelog",
+                "only commit of type feat and fix are included in the changelog",
                 (fun _ ->
                     Changelog.generateNewVersionSection
                         {
-                            Github =
-                                {
-                                    Owner = "owner"
-                                    Repository = "repository"
-                                }
-                                |> Some
-                            Groups =
-                                [
-                                    {
-                                        Type = "chore"
-                                        Bump = Minor
-                                        Group = "🧹 Chore"
-                                    }
-                                    {
-                                        Type = "style"
-                                        Bump = Patch
-                                        Group = "🎨 Style"
-                                    }
-                                ]
+                            Owner = "owner"
+                            Repository = "repository"
                         }
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
@@ -379,7 +344,10 @@ let private generateNewVersionSectionTests =
                 "include changelog additional data when present",
                 (fun _ ->
                     Changelog.generateNewVersionSection
-                        defaultConfigWithRemote
+                        {
+                            Owner = "owner"
+                            Repository = "repository"
+                        }
                         {
                             NewVersion = Semver.SemVersion(1, 0, 0)
                             CommitsForRelease =
@@ -431,7 +399,10 @@ let private updateChangelogWithNewVersionTests =
                         | Error _ -> failwith "Expected Ok"
 
                     Changelog.updateWithNewVersion
-                        defaultConfigWithRemote
+                        {
+                            Owner = "owner"
+                            Repository = "repository"
+                        }
                         {
                             NewVersion = Semver.SemVersion(1, 1, 0)
                             CommitsForRelease =
@@ -478,7 +449,10 @@ let private updateChangelogWithNewVersionTests =
                         | Error _ -> failwith "Expected Ok"
 
                     Changelog.updateWithNewVersion
-                        defaultConfigWithRemote
+                        {
+                            Owner = "owner"
+                            Repository = "repository"
+                        }
                         {
                             NewVersion = Semver.SemVersion(1, 1, 0)
                             CommitsForRelease =

@@ -2,8 +2,8 @@
 
 ### 🏗️ Breaking changes
 
-* Fix bug via breaking change ([9156258](https://github.com/owner/repository/commit/9156258d463ba78ac21ebb5fcd32147657bfe86f))
 * Add another feature via breaking change ([4057b1a](https://github.com/owner/repository/commit/4057b1a703845efcdf2f3b49240dd79d8ce7150e))
+* Fix bug via breaking change ([9156258](https://github.com/owner/repository/commit/9156258d463ba78ac21ebb5fcd32147657bfe86f))
 
 ### 🚀 Features
 

@@ -47,6 +47,10 @@ type GenerateSettings() =
     [<Description("Run the command without writing to the changelog file, output the result in STDOUT instead")>]
     member val DryRun: bool = false with get, set
 
+    [<CommandOption("--github-repo <REPO>")>]
+    [<Description("GitHub repository name in format 'owner/repo'")>]
+    member val GitHubRepo: string option = None with get, set
+
 type CommitForRelease =
     {
         OriginalCommit: Git.Commit

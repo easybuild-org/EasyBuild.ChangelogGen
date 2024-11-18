@@ -9,24 +9,14 @@ open EasyBuild.ChangelogGen.Types
 type Config =
     {
         CommitParserConfig: CommitParserConfig
-        ChangelogGenConfig: ChangelogGenConfig
     }
 
     static member Decoder: Decoder<Config> =
         Decode.object (fun get ->
-            {
-                CommitParserConfig = get.Required.Raw CommitParserConfig.decoder
-                ChangelogGenConfig =
-                    get.Optional.Field "changelog-gen" ChangelogGenConfig.Decoder
-                    |> Option.defaultValue ChangelogGenConfig.Default
-            }
+            { CommitParserConfig = get.Required.Raw CommitParserConfig.decoder }
         )
 
-    static member Default =
-        {
-            CommitParserConfig = CommitParserConfig.Default
-            ChangelogGenConfig = ChangelogGenConfig.Default
-        }
+    static member Default = { CommitParserConfig = CommitParserConfig.Default }
 
 let tryLoadConfig (configFile: string option) : Result<Config, string> =
     let configFile =

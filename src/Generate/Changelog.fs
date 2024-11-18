@@ -91,98 +91,117 @@ let tryFindAdditionalChangelogContent (text: string) : string list list =
 let private capitalizeFirstLetter (text: string) =
     (string text.[0]).ToUpper() + text.[1..]
 
-let generateNewVersionSection (config: ChangelogGenConfig) (releaseContext: BumpInfo) =
-    let newVersionLines = ResizeArray<string>()
+module Literals =
 
-    let appendLine (line: string) = newVersionLines.Add(line)
+    module Type =
 
-    let newLine () = newVersionLines.Add("")
+        [<Literal>]
+        let BREAKING_CHANGE = "breaking change"
 
-    appendLine ($"## %s{releaseContext.NewVersion.ToString()}")
-    newLine ()
+        [<Literal>]
+        let FEAT = "feat"
 
-    let groupMap =
-        config.Groups |> List.map (fun group -> group.Type, group) |> Map.ofList
+        [<Literal>]
+        let FIX = "fix"
 
-    let dedicatedBreakingChangeGroup =
-        match Map.tryFind "breaking change" groupMap with
-        | None -> false
-        | Some _ -> true
+let (|BreakingChange|Feat|Fix|Other|) (commit: EasyBuild.CommitParser.Types.CommitMessage) =
+    if commit.BreakingChange then
+        BreakingChange
+    elif commit.Type = Literals.Type.FEAT then
+        Feat
+    elif commit.Type = Literals.Type.FIX then
+        Fix
+    else
+        Other
 
-    let rec groupCommits
-        (acc: Map<string, CommitForRelease list>)
-        (commits: CommitForRelease list)
-        =
+type GroupedCommits =
+    {
+        BreakingChanges: CommitForRelease list
+        Feats: CommitForRelease list
+        Fixes: CommitForRelease list
+    }
 
-        let addOrUpdate
-            (key: string)
-            (value: CommitForRelease)
-            (map: Map<string, CommitForRelease list>)
-            =
-            match Map.tryFind key map with
-            | None -> map.Add(key, [ value ])
-            | Some commits -> map.Add(key, commits @ [ value ])
+type Writer() =
+    let lines = ResizeArray<string>()
+
+    member _.AppendLine(line: string) = lines.Add(line)
+
+    member _.NewLine() = lines.Add("")
+
+    member _.ToText() = lines |> String.concat "\n"
+
+let private writeSection
+    (writer: Writer)
+    (label: string)
+    (githubRemote: GithubRemoteConfig)
+    (commits: CommitForRelease list)
+    =
+    if commits.Length > 0 then
+        writer.AppendLine $"### %s{label}"
+        writer.NewLine()
+
+        for commit in commits do
+            let githubCommitUrl sha =
+                $"https://github.com/%s{githubRemote.Owner}/%s{githubRemote.Repository}/commit/%s{sha}"
+
+            let commitUrl = githubCommitUrl commit.OriginalCommit.Hash
+
+            let description = capitalizeFirstLetter commit.SemanticCommit.Description
+
+            $"* %s{description} ([%s{commit.OriginalCommit.AbbrevHash}](%s{commitUrl}))"
+            |> writer.AppendLine
+
+            let additionalChangelogContent =
+                tryFindAdditionalChangelogContent commit.SemanticCommit.Body
+
+            for blockLines in additionalChangelogContent do
+                writer.NewLine()
+
+                for line in blockLines do
+                    $"    %s{line}" |> _.TrimEnd() |> writer.AppendLine
+
+        writer.NewLine()
+
+let generateNewVersionSection (githubRemote: GithubRemoteConfig) (releaseContext: BumpInfo) =
+    let writer = Writer()
+
+    writer.AppendLine $"## %s{releaseContext.NewVersion.ToString()}"
+    writer.NewLine()
+
+    let rec groupCommits (acc: GroupedCommits) (commits: CommitForRelease list) =
 
         match commits with
         | [] -> acc
         | commit :: rest ->
-            match Map.tryFind commit.SemanticCommit.Type groupMap with
+            match commit.SemanticCommit with
+            | BreakingChange ->
+                groupCommits { acc with BreakingChanges = commit :: acc.BreakingChanges } rest
+            | Feat -> groupCommits { acc with Feats = commit :: acc.Feats } rest
+            | Fix -> groupCommits { acc with Fixes = commit :: acc.Fixes } rest
             // This commit type is not to be emitted in the changelog
-            | None -> groupCommits acc rest
-            | Some groupInfo ->
-                let newAcc =
-                    if commit.SemanticCommit.BreakingChange && dedicatedBreakingChangeGroup then
-                        addOrUpdate "breaking change" commit acc
-                    else
-                        addOrUpdate groupInfo.Type commit acc
+            | Other -> groupCommits acc rest
 
-                groupCommits newAcc rest
+    let groupedCommits =
+        groupCommits
+            {
+                BreakingChanges = []
+                Feats = []
+                Fixes = []
+            }
+            releaseContext.CommitsForRelease
 
-    let groupedCommits = groupCommits Map.empty releaseContext.CommitsForRelease
+    writeSection writer "🏗️ Breaking changes" githubRemote groupedCommits.BreakingChanges
+    writeSection writer "🚀 Features" githubRemote groupedCommits.Feats
+    writeSection writer "🐞 Bug Fixes" githubRemote groupedCommits.Fixes
 
-    match config.Github with
-    | Some githubRemote ->
-        config.Groups
-        |> List.iter (fun groupInfo ->
-            match Map.tryFind groupInfo.Type groupedCommits with
-            | Some commits ->
-                appendLine ($"### %s{groupInfo.Group}")
-                newLine ()
-
-                for commit in commits do
-                    let githubCommitUrl sha =
-                        $"https://github.com/%s{githubRemote.Owner}/%s{githubRemote.Repository}/commit/%s{sha}"
-
-                    let commitUrl = githubCommitUrl commit.OriginalCommit.Hash
-
-                    let description = capitalizeFirstLetter commit.SemanticCommit.Description
-
-                    $"* %s{description} ([%s{commit.OriginalCommit.AbbrevHash}](%s{commitUrl}))"
-                    |> appendLine
-
-                    let additionalChangelogContent =
-                        tryFindAdditionalChangelogContent commit.SemanticCommit.Body
-
-                    for blockLines in additionalChangelogContent do
-                        appendLine ""
-
-                        for line in blockLines do
-                            $"    %s{line}" |> _.TrimEnd() |> appendLine
-
-                newLine ()
-            | None -> () // Can happen if there are no commits for this group
-        )
-
-    | None -> failwith "Github remote not found"
-
-    newVersionLines |> String.concat "\n"
+    writer.ToText()
 
 let updateWithNewVersion
-    (config: ChangelogGenConfig)
+    (githubRemote: GithubRemoteConfig)
     (releaseContext: BumpInfo)
     (changelogInfo: ChangelogInfo)
     =
-    let newVersionLines = generateNewVersionSection config releaseContext
+    let newVersionLines = generateNewVersionSection githubRemote releaseContext
 
     let rec removeConsecutiveEmptyLines
         (previousLineWasBlank: bool)
