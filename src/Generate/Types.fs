@@ -44,7 +44,7 @@ type GenerateSettings() =
     member val SkipInvalidCommit: bool = true with get, set
 
     [<CommandOption("--dry-run")>]
-    [<Description("Run the command without writing to the changelog file, output the result in STDOUT instead")>]
+    [<Description("Run the command without writing to the changelog file, output the new version content to STDOUT instead")>]
     member val DryRun: bool = false with get, set
 
     [<CommandOption("--github-repo <REPO>")>]

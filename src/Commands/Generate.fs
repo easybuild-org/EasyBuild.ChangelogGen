@@ -32,13 +32,19 @@ type GenerateCommand() =
                 match releaseContext with
                 | NoVersionBumpRequired -> Log.success "No version bump required."
                 | BumpRequired bumpInfo ->
-                    let newChangelogContent =
-                        Changelog.updateWithNewVersion remoteConfig bumpInfo changelogInfo
-
                     if settings.DryRun then
-                        Log.info "Dry run enabled, not writing to file."
-                        printfn "%s" newChangelogContent
+                        let newVersionContent =
+                            Changelog.generateNewVersionSection
+                                remoteConfig
+                                changelogInfo.LastReleaseCommit
+                                bumpInfo
+
+                        Log.info "Dry run enabled, new version content:"
+                        printfn "%s" newVersionContent
                     else
+                        let newChangelogContent =
+                            Changelog.updateWithNewVersion remoteConfig bumpInfo changelogInfo
+
                         File.WriteAllText(changelogInfo.File.FullName, newChangelogContent)
                         Log.success ($"Changelog updated with new version:")
                         // Print to stdout so it can be captured easily by other tools
