@@ -182,7 +182,12 @@ let generateNewVersionSection
         "##"
         $"%s{releaseContext.NewVersion.ToString()}"
         "-"
+        // If in debug mode, use a fixed date to make testing stable
+#if DEBUG
+        "2024-11-18"
+#else
         DateTime.UtcNow.ToString("yyyy-MM-dd")
+#endif
     ]
     |> String.concat " "
     |> writer.AppendLine
