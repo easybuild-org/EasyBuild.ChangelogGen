@@ -29,6 +29,7 @@ type ReleaseCommand() =
                 CmdLine.empty
                 |> CmdLine.appendRaw "run"
                 |> CmdLine.appendPrefix "--project" Workspace.src.``EasyBuild.ChangelogGen.fsproj``
+                |> CmdLine.appendPrefix "--configuration" "Release"
                 |> CmdLine.appendRaw "--"
                 |> CmdLine.appendSeq context.Remaining.Raw
                 |> CmdLine.toString,
