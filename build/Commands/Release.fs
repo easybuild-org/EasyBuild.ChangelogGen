@@ -6,7 +6,8 @@ open EasyBuild.Workspace
 open System
 open System.IO
 open BlackFox.CommandLine
-open EasyBuild.Tools.Dotnet
+open EasyBuild.Tools.DotNet
+open EasyBuild.Tools.Git
 open EasyBuild.Commands.Test
 
 type ReleaseSettings() =
@@ -38,25 +39,12 @@ type ReleaseCommand() =
             |> Async.AwaitTask
             |> Async.RunSynchronously
 
-        let nupkgPath = Nuget.pack Workspace.src.``.``
+        let nupkgPath = DotNet.pack Workspace.src.``.``
 
-        let nugetKey =
-            match Environment.GetEnvironmentVariable("NUGET_KEY") with
-            | null -> failwith "NUGET_KEY environment variable not set."
-            | key -> key
+        DotNet.nugetPush nupkgPath
 
-        Nuget.push (nupkgPath, nugetKey)
-
-        Command.Run("git", "add .")
-
-        Command.Run(
-            "git",
-            CmdLine.empty
-            |> CmdLine.appendRaw "commit"
-            |> CmdLine.appendPrefix "-m" $"chore: release %s{newVersion}"
-            |> CmdLine.toString
-        )
-
-        Command.Run("git", "push")
+        Git.addAll ()
+        Git.commitRelease newVersion
+        Git.push ()
 
         0
