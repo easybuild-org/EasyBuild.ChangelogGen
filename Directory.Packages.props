@@ -4,7 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="BlackFox.CommandLine" Version="1.0.0" />
-    <PackageVersion Include="EasyBuild.CommitParser" Version="2.1.1" />
+    <PackageVersion Include="EasyBuild.CommitParser" Version="3.0.0" />
     <PackageVersion Include="EasyBuild.FileSystemProvider" Version="0.3.0" />
     <PackageVersion Include="EasyBuild.PackageReleaseNotes.Tasks" Version="2.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
