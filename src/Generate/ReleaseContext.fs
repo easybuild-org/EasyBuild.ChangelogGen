@@ -62,7 +62,9 @@ let computeVersion
 
         let shouldBumpMinor =
             commitsForRelease
-            |> List.exists (fun commit -> commit.SemanticCommit.Type = "feat")
+            |> List.exists (fun commit ->
+                commit.SemanticCommit.Type = "feat" || commit.SemanticCommit.Type = "perf"
+            )
 
         let shouldBumpPatch =
             commitsForRelease
@@ -150,6 +152,7 @@ let compute
         // Only include commits that have the type feat, fix or is marked as a breaking change
         |> List.filter (fun commit ->
             commit.SemanticCommit.Type = "feat"
+            || commit.SemanticCommit.Type = "perf"
             || commit.SemanticCommit.Type = "fix"
             || commit.SemanticCommit.BreakingChange
         )

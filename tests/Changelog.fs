@@ -292,12 +292,23 @@ let private generateNewVersionSectionTests =
                                     |> gitCommitToCommitForRelease
                                     Git.Commit.Create(
                                         "9156258d463ba78ac21ebb5fcd32147657bfe86f",
-                                        "fix: Fix bug via breaking change"
+                                        "fix!: Fix bug via breaking change"
                                     )
                                     |> gitCommitToCommitForRelease
                                     Git.Commit.Create(
                                         "4057b1a703845efcdf2f3b49240dd79d8ce7150e",
-                                        "feat: Add another feature via breaking change"
+                                        "feat!: Add another feature via breaking change"
+                                    )
+                                    |> gitCommitToCommitForRelease
+
+                                    Git.Commit.Create(
+                                        "d4212797a454d591068e18480843c87766b0291e",
+                                        "perf!: performance improvement via breaking change"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                    Git.Commit.Create(
+                                        "287a4ee6f89ab84e52283d69f4304ece97e5e87c",
+                                        "perf: performance improvement"
                                     )
                                     |> gitCommitToCommitForRelease
                                 ]
@@ -307,7 +318,7 @@ let private generateNewVersionSectionTests =
             )
 
             testMarkdown (
-                "only commit of type feat and fix are included in the changelog",
+                "only commit of type feat, perf and fix are included in the changelog",
                 (fun _ ->
                     Changelog.generateNewVersionSection
                         {
@@ -327,6 +338,11 @@ let private generateNewVersionSectionTests =
                                     Git.Commit.Create(
                                         "2a6f3b3403aaa629de6e65558448b37f126f8e86",
                                         "fix: Fix bug"
+                                    )
+                                    |> gitCommitToCommitForRelease
+                                    Git.Commit.Create(
+                                        "2a6f3b3403aaa629de6e65558448b37f126f8e86",
+                                        "perf: Performance improvement"
                                     )
                                     |> gitCommitToCommitForRelease
                                     Git.Commit.Create(

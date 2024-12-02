@@ -79,6 +79,14 @@ Rules are the following:
     * feat: second feature # => 1.3.0
     ```
 
+- `perf` commits will bump the minor version
+
+    ```text
+    * chore: release 1.2.10
+    * perf: first performance improvement
+    * perf: second performance improvement # => 1.3.0
+    ```
+
 - `fix` commits will bump the patch version
 
     ```text
@@ -87,11 +95,12 @@ Rules are the following:
     * fix: second fix # => 1.2.11
     ```
 
-You can mix different types of commits, the highest version will be used (`breaking change` > `feat` > `fix`).
+You can mix different types of commits, the highest version will be used (`breaking change` > `feat` or `perf` > `fix`).
 
 ```text
 * chore: release 1.2.10
 * feat: first feature
+* perf: first performance improvement
 * fix: first fix # => 1.3.0
 ```
 

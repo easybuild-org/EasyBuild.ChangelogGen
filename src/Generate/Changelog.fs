@@ -102,13 +102,18 @@ module Literals =
         let FEAT = "feat"
 
         [<Literal>]
+        let PERF = "perf"
+
+        [<Literal>]
         let FIX = "fix"
 
-let (|BreakingChange|Feat|Fix|Other|) (commit: EasyBuild.CommitParser.Types.CommitMessage) =
+let (|BreakingChange|Feat|Perf|Fix|Other|) (commit: EasyBuild.CommitParser.Types.CommitMessage) =
     if commit.BreakingChange then
         BreakingChange
     elif commit.Type = Literals.Type.FEAT then
         Feat
+    elif commit.Type = Literals.Type.PERF then
+        Perf
     elif commit.Type = Literals.Type.FIX then
         Fix
     else
@@ -118,6 +123,7 @@ type GroupedCommits =
     {
         BreakingChanges: CommitForRelease list
         Feats: CommitForRelease list
+        Perfs: CommitForRelease list
         Fixes: CommitForRelease list
     }
 
@@ -204,6 +210,7 @@ let generateNewVersionSection
                 groupCommits { acc with BreakingChanges = commit :: acc.BreakingChanges } rest
             | Feat -> groupCommits { acc with Feats = commit :: acc.Feats } rest
             | Fix -> groupCommits { acc with Fixes = commit :: acc.Fixes } rest
+            | Perf -> groupCommits { acc with Perfs = commit :: acc.Perfs } rest
             // This commit type is not to be emitted in the changelog
             | Other -> groupCommits acc rest
 
@@ -212,6 +219,7 @@ let generateNewVersionSection
             {
                 BreakingChanges = []
                 Feats = []
+                Perfs = []
                 Fixes = []
             }
             releaseContext.CommitsForRelease
@@ -219,6 +227,7 @@ let generateNewVersionSection
     writeSection writer "🏗️ Breaking changes" githubRemote groupedCommits.BreakingChanges
     writeSection writer "🚀 Features" githubRemote groupedCommits.Feats
     writeSection writer "🐞 Bug Fixes" githubRemote groupedCommits.Fixes
+    writeSection writer "⚡ Performance Improvements" githubRemote groupedCommits.Perfs
 
     match previousReleasedSha with
     | Some sha ->

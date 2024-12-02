@@ -13,9 +13,9 @@
       },
       "EasyBuild.CommitParser": {
         "type": "Direct",
-        "requested": "[2.1.1, )",
-        "resolved": "2.1.1",
-        "contentHash": "S1svFW9Jvit9FuFZoyOnQ8tpbw0HexvcMUb9PSW7Yjtb0ty6jgmG0lYmZ6fmdINM+W6RJEhIIHIDyFjXPPv6/Q==",
+        "requested": "[3.0.0, )",
+        "resolved": "3.0.0",
+        "contentHash": "4N8zQ3nXEdmsp8txFrrxz2SbB6ZCQ6/OYDdgrU8G9brUY17s6DYEkPL0tnWdGfjDPufBPO3Uvz4yIB8HonkY4w==",
         "dependencies": {
           "FSharp.Core": "7.0.300",
           "FsToolkit.ErrorHandling": "4.18.0",

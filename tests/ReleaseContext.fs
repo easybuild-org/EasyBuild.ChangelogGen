@@ -151,6 +151,52 @@ let private computeTests =
                 Expect.equal actual expected
             }
 
+            test "If commit is of type perf bump minor" {
+                let defaultGenerateSettings = GenerateSettings(Changelog = "CHANGELOG.md")
+
+                let changelogInfo =
+                    {
+                        File = FileInfo(Path.GetTempFileName())
+                        Content = STANDARD_CHANGELOG
+                        Versions = [ SemVersion(0, 0, 0) ]
+                    }
+
+                let commits: Git.Commit list =
+                    [
+                        Git.Commit.Create(
+                            "49c0699af98a67f1e8efcac8b1467b283a244aa8",
+                            "perf: i am speed !!!"
+                        )
+                    ]
+
+                let actual =
+                    ReleaseContext.compute
+                        defaultGenerateSettings
+                        changelogInfo
+                        commits
+                        CommitParserConfig.Default
+
+                let expected =
+                    {
+                        NewVersion = SemVersion(0, 1, 0)
+                        CommitsForRelease =
+                            [
+                                {
+                                    OriginalCommit = commits[0]
+                                    SemanticCommit =
+                                        Parser.tryParseCommitMessage
+                                            CommitParserConfig.Default
+                                            commits[0].RawBody
+                                        |> Result.valueOr failwith
+                                }
+                            ]
+                        LastCommitSha = "49c0699af98a67f1e8efcac8b1467b283a244aa8"
+                    }
+                    |> BumpRequired
+
+                Expect.equal actual expected
+            }
+
             test "If commit is of type fix bump patch" {
                 let defaultGenerateSettings = GenerateSettings(Changelog = "CHANGELOG.md")
 
@@ -584,7 +630,11 @@ let private computeVersionTests =
                         }
                     ]
 
-                let actual = ReleaseContext.computeVersion settings commits (SemVersion.ParsedFrom(3,0,0, "beta.10"))
+                let actual =
+                    ReleaseContext.computeVersion
+                        settings
+                        commits
+                        (SemVersion.ParsedFrom(3, 0, 0, "beta.10"))
 
                 Expect.equal actual (Some(SemVersion.ParsedFrom(3, 0, 0, "beta.11")))
             }
@@ -629,7 +679,11 @@ let private computeVersionTests =
                         }
                     ]
 
-                let actual = ReleaseContext.computeVersion settings commits (SemVersion.ParsedFrom(2, 2, 0, "beta.233"))
+                let actual =
+                    ReleaseContext.computeVersion
+                        settings
+                        commits
+                        (SemVersion.ParsedFrom(2, 2, 0, "beta.233"))
 
                 Expect.equal actual (Some(SemVersion.ParsedFrom(2, 2, 0, "beta.234")))
             }
@@ -674,12 +728,17 @@ let private computeVersionTests =
                         }
                     ]
 
-                let actual = ReleaseContext.computeVersion settings commits (SemVersion.ParsedFrom(2, 2, 45, "beta.5"))
+                let actual =
+                    ReleaseContext.computeVersion
+                        settings
+                        commits
+                        (SemVersion.ParsedFrom(2, 2, 45, "beta.5"))
 
                 Expect.equal actual (Some(SemVersion.ParsedFrom(2, 2, 45, "beta.6")))
             }
 
-            test "If previous version was a pre-release, and user don't request a pre-release, release it as stable (check for major version)" {
+            test
+                "If previous version was a pre-release, and user don't request a pre-release, release it as stable (check for major version)" {
                 let settings = GenerateSettings(Changelog = "CHANGELOG.md")
 
                 let commits: Git.Commit list =
@@ -711,7 +770,8 @@ let private computeVersionTests =
                 Expect.equal actual (Some(SemVersion(2, 0, 0)))
             }
 
-            test "If previous version was a pre-release, and user don't request a pre-release, release it as stable (check for minor version)" {
+            test
+                "If previous version was a pre-release, and user don't request a pre-release, release it as stable (check for minor version)" {
                 let settings = GenerateSettings(Changelog = "CHANGELOG.md")
 
                 let commits: Git.Commit list =
@@ -743,7 +803,8 @@ let private computeVersionTests =
                 Expect.equal actual (Some(SemVersion(2, 0, 0)))
             }
 
-            test "If previous version was a pre-release, and user don't request a pre-release, release it as stable (check for patch version)" {
+            test
+                "If previous version was a pre-release, and user don't request a pre-release, release it as stable (check for patch version)" {
                 let settings = GenerateSettings(Changelog = "CHANGELOG.md")
 
                 let commits: Git.Commit list =
@@ -775,8 +836,13 @@ let private computeVersionTests =
                 Expect.equal actual (Some(SemVersion(2, 0, 0)))
             }
 
-            test "If pre-release identifier is different start a new pre-release from 1 (check for major)" {
-                let settings = GenerateSettings(Changelog = "CHANGELOG.md", PreRelease = FlagValue(Value = "alpha", IsSet = true))
+            test
+                "If pre-release identifier is different start a new pre-release from 1 (check for major)" {
+                let settings =
+                    GenerateSettings(
+                        Changelog = "CHANGELOG.md",
+                        PreRelease = FlagValue(Value = "alpha", IsSet = true)
+                    )
 
                 let commits: Git.Commit list =
                     [
@@ -807,8 +873,13 @@ let private computeVersionTests =
                 Expect.equal actual (Some(SemVersion.ParsedFrom(2, 0, 0, "alpha.1")))
             }
 
-            test "If pre-release identifier is different start a new pre-release from 1 (check for minor)" {
-                let settings = GenerateSettings(Changelog = "CHANGELOG.md", PreRelease = FlagValue(Value = "alpha", IsSet = true))
+            test
+                "If pre-release identifier is different start a new pre-release from 1 (check for minor)" {
+                let settings =
+                    GenerateSettings(
+                        Changelog = "CHANGELOG.md",
+                        PreRelease = FlagValue(Value = "alpha", IsSet = true)
+                    )
 
                 let commits: Git.Commit list =
                     [
@@ -839,8 +910,13 @@ let private computeVersionTests =
                 Expect.equal actual (Some(SemVersion.ParsedFrom(2, 2, 0, "alpha.1")))
             }
 
-            test "If pre-release identifier is different start a new pre-release from 1 (check for patch)" {
-                let settings = GenerateSettings(Changelog = "CHANGELOG.md", PreRelease = FlagValue(Value = "alpha", IsSet = true))
+            test
+                "If pre-release identifier is different start a new pre-release from 1 (check for patch)" {
+                let settings =
+                    GenerateSettings(
+                        Changelog = "CHANGELOG.md",
+                        PreRelease = FlagValue(Value = "alpha", IsSet = true)
+                    )
 
                 let commits: Git.Commit list =
                     [
