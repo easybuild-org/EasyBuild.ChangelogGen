@@ -205,6 +205,14 @@ dotnet changelog-gen src/converter/CHANGELOG.md --tag converter
 
 ## Exit codes
 
+### Standard exit codes
+
 - `0`: Success
 - `1`: Error
-- `100`: Help was requested (allow other tools to detect if help was requested). This is left to the user to decide if they want to treat this as an error or not.
+
+### Custom exit codes
+
+The following exit codes serves as a way to communicate with other tools. It is left to the user to decide if they want to treat this as an error or not.
+
+- `100`: Help was requested
+- `101`: No version bump needed

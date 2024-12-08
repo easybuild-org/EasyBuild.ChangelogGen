@@ -30,7 +30,9 @@ type GenerateCommand() =
                     ReleaseContext.compute settings changelogInfo commits config.CommitParserConfig
 
                 match releaseContext with
-                | NoVersionBumpRequired -> Log.success "No version bump required."
+                | NoVersionBumpRequired ->
+                    Log.success "No version bump required."
+                    return 101
                 | BumpRequired bumpInfo ->
                     if settings.DryRun then
                         let newVersionContent =
@@ -41,6 +43,7 @@ type GenerateCommand() =
 
                         Log.info "Dry run enabled, new version content:"
                         printfn "%s" newVersionContent
+                        return 0
                     else
                         let newChangelogContent =
                             Changelog.updateWithNewVersion remoteConfig bumpInfo changelogInfo
@@ -49,10 +52,11 @@ type GenerateCommand() =
                         Log.success ($"Changelog updated with new version:")
                         // Print to stdout so it can be captured easily by other tools
                         printfn "%s" (bumpInfo.NewVersion.ToString())
+                        return 0
             }
 
         match res with
-        | Ok _ -> 0
+        | Ok exitCode -> exitCode
         | Error error ->
             Log.error error
             1
