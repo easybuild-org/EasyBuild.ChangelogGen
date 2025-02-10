@@ -85,7 +85,13 @@ let readCommit (sha1: string) =
 
     match Decode.fromString Commit.Decoder commitStdout with
     | Ok x -> x
-    | Error e -> failwith e
+    | Error e ->
+        $"""Failed to parse JSON:
+
+{commitStdout}
+
+Error: {e}"""
+        |> failwith
 
 let getCommits (filter: GetCommitsFilter) =
     let commitFilter =
