@@ -177,17 +177,22 @@ let tryGetRemoteFromSSH (url: string) =
         None
 
 let tryFindRemote () =
-
     let struct (remoteStdout, _) =
-        Command.ReadAsync(
-            "git",
-            CmdLine.empty
-            |> CmdLine.appendRaw "config"
-            |> CmdLine.appendPrefix "--get" "remote.origin.url"
-            |> CmdLine.toString
-        )
-        |> Async.AwaitTask
-        |> Async.RunSynchronously
+        try
+            Command.ReadAsync(
+                "git",
+                CmdLine.empty
+                |> CmdLine.appendRaw "config"
+                |> CmdLine.appendPrefix "--get" "remote.origin.url"
+                |> CmdLine.toString
+            )
+            |> Async.AwaitTask
+            |> Async.RunSynchronously
+        with
+        // If we don't have a remote configured the Git command returns exitCode 1
+        // making the invocation throw an exception
+        | _ ->
+            struct ("", "")
 
     let remoteUrl = remoteStdout.Trim()
 
