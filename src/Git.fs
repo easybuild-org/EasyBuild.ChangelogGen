@@ -117,6 +117,7 @@ let getCommits (filter: GetCommitsFilter) =
 
 type Remote =
     {
+        Hostname: string
         Owner: string
         Repository: string
     }
@@ -124,6 +125,12 @@ type Remote =
 let private stripSuffix (suffix: string) (str: string) =
     if str.EndsWith(suffix) then
         str.Substring(0, str.Length - suffix.Length)
+    else
+        str
+
+let private stripPrefix (prefix: string) (str: string) =
+    if str.StartsWith(prefix) then
+        str.Substring(prefix.Length)
     else
         str
 
@@ -148,6 +155,7 @@ let tryGetRemoteFromUrl (url: string) =
 
             Some
                 {
+                    Hostname = uri.Host
                     Owner = owner.Trim('/')
                     Repository = repo.Trim('/')
                 }
@@ -158,16 +166,17 @@ let tryGetRemoteFromSSH (url: string) =
     if url.Contains("@") && url.Contains(":") && url.Contains("/") then
         let segments =
             // Remove the .git extension and split the url
-            url |> stripSuffix ".git" |> _.Split(':') |> Seq.toList
+            url |> stripPrefix "git@" |> stripSuffix ".git" |> _.Split(':') |> Seq.toList
 
         match segments with
-        | _ :: owner_repo :: _ ->
+        | hostname :: owner_repo :: _ ->
             let segments = owner_repo.Split('/') |> Array.rev |> Array.toList
 
             match segments with
             | repo :: owner :: _ ->
                 Some
                     {
+                        Hostname = hostname
                         Owner = owner
                         Repository = repo
                     }

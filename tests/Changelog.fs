@@ -175,6 +175,7 @@ let private generateNewVersionSectionTests =
                 (fun _ ->
                     Changelog.generateNewVersionSection
                         {
+                            Hostname = "github.com"
                             Owner = "owner"
                             Repository = "repository"
                         }
@@ -204,6 +205,7 @@ let private generateNewVersionSectionTests =
                 (fun _ ->
                     Changelog.generateNewVersionSection
                         {
+                            Hostname = "github.com"
                             Owner = "owner"
                             Repository = "repository"
                         }
@@ -233,6 +235,7 @@ let private generateNewVersionSectionTests =
                 (fun _ ->
                     Changelog.generateNewVersionSection
                         {
+                            Hostname = "github.com"
                             Owner = "owner"
                             Repository = "repository"
                         }
@@ -272,6 +275,7 @@ let private generateNewVersionSectionTests =
                 (fun _ ->
                     Changelog.generateNewVersionSection
                         {
+                            Hostname = "github.com"
                             Owner = "owner"
                             Repository = "repository"
                         }
@@ -322,6 +326,7 @@ let private generateNewVersionSectionTests =
                 (fun _ ->
                     Changelog.generateNewVersionSection
                         {
+                            Hostname = "github.com"
                             Owner = "owner"
                             Repository = "repository"
                         }
@@ -366,6 +371,7 @@ let private generateNewVersionSectionTests =
                 (fun _ ->
                     Changelog.generateNewVersionSection
                         {
+                            Hostname = "github.com"
                             Owner = "owner"
                             Repository = "repository"
                         }
@@ -409,6 +415,7 @@ This is a list of changes:
                 (fun _ ->
                     Changelog.generateNewVersionSection
                         {
+                            Hostname = "github.com"
                             Owner = "owner"
                             Repository = "repository"
                         }
@@ -438,6 +445,7 @@ This is a list of changes:
                 (fun _ ->
                     Changelog.generateNewVersionSection
                         {
+                            Hostname = "github.com"
                             Owner = "owner"
                             Repository = "repository"
                         }
@@ -495,6 +503,7 @@ let private updateChangelogWithNewVersionTests =
 
                     Changelog.updateWithNewVersion
                         {
+                            Hostname = "github.com"
                             Owner = "owner"
                             Repository = "repository"
                         }
@@ -545,6 +554,7 @@ let private updateChangelogWithNewVersionTests =
 
                     Changelog.updateWithNewVersion
                         {
+                            Hostname = "github.com"
                             Owner = "owner"
                             Repository = "repository"
                         }

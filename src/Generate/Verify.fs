@@ -30,28 +30,28 @@ You can use the --allow-dirty option to allow a dirty repository."""
         Ok()
 
 let resolveRemoteConfig (settings: GenerateSettings) =
-    match settings.GitHubRepo with
-    | Some githubRepo ->
-        let segments = githubRepo.Split('/') |> Array.toList
+    match settings.RemoteHostname, settings.RemoteOwner, settings.RemoteRepo with
+    | Some hostname, Some owner, Some repo ->
+        ({
+            Hostname = hostname
+            Owner = owner
+            Repository = repo
+        }
+        : Types.RemoteConfig)
+        |> Ok
 
-        match segments with
-        | [ owner; repo ] ->
-            ({
-                Owner = owner
-                Repository = repo
-            }
-            : Types.GithubRemoteConfig)
-            |> Ok
-        | _ ->
-            Error $"""Invalid format for --github-repo option, expected format is 'owner/repo'."""
-
-    | None ->
+    | None, None, None ->
         match Git.tryFindRemote () with
         | Ok remote ->
             ({
+                Hostname = remote.Hostname
                 Owner = remote.Owner
                 Repository = remote.Repository
             }
-            : Types.GithubRemoteConfig)
+            : Types.RemoteConfig)
             |> Ok
         | Error error -> Error error
+
+    | _ ->
+        Error
+            """When using --remote-hostname, --remote-owner and --remote-repo they must be all provided."""

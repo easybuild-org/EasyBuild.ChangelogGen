@@ -47,9 +47,17 @@ type GenerateSettings() =
     [<Description("Run the command without writing to the changelog file, output the new version content to STDOUT instead")>]
     member val DryRun: bool = false with get, set
 
-    [<CommandOption("--github-repo <REPO>")>]
-    [<Description("GitHub repository name in format 'owner/repo'")>]
-    member val GitHubRepo: string option = None with get, set
+    [<CommandOption("--remote-hostname <HOSTNAME>")>]
+    [<Description("Git remote hostname, e.g. github.com, gitlab.com")>]
+    member val RemoteHostname: string option = None with get, set
+
+    [<CommandOption("--remote-owner <OWNER>")>]
+    [<Description("Git remote owner or organization name")>]
+    member val RemoteOwner: string option = None with get, set
+
+    [<CommandOption("--remote-repo <REPO>")>]
+    [<Description("Git remote repository name")>]
+    member val RemoteRepo: string option = None with get, set
 
 type CommitForRelease =
     {

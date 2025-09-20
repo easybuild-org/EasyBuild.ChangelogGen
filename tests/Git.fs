@@ -41,6 +41,7 @@ let tests =
 
                         let expected: Git.Remote =
                             {
+                                Hostname = "github.com"
                                 Owner = "owner"
                                 Repository = "repo"
                             }
@@ -53,6 +54,7 @@ let tests =
 
                         let expected: Git.Remote =
                             {
+                                Hostname = "github.com"
                                 Owner = "owner"
                                 Repository = "repo"
                             }
@@ -75,6 +77,7 @@ let tests =
 
                         let expected: Git.Remote =
                             {
+                                Hostname = "github.com"
                                 Owner = "owner"
                                 Repository = "repo"
                             }
@@ -87,6 +90,7 @@ let tests =
 
                         let expected: Git.Remote =
                             {
+                                Hostname = "github.com"
                                 Owner = "owner"
                                 Repository = "repo"
                             }

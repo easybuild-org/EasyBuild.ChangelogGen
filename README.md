@@ -26,31 +26,20 @@ ARGUMENTS:
     [changelog]    Path to the changelog file. Default is CHANGELOG.md
 
 OPTIONS:
-                                     DEFAULT
-    -h, --help                                  Prints help information
-    -v, --version                               Prints version information
-    -c, --config                                Path to the configuration file
-        --allow-dirty                           Allow to run in a dirty repository
-                                                (having not commit changes in your
-                                                reporitory)
-        --allow-branch <VALUES>                 List of branches that are allowed to
-                                                be used to generate the changelog.
-                                                Default is 'main'
-        --tag <VALUES>                          List of tags to include in the
-                                                changelog
-        --pre-release [PREFIX]       beta       Indicate that the generated version is
-                                                a pre-release version. Optionally, you
-                                                can provide a prefix for the beta
-                                                version. Default is 'beta'
-        --force-version <VERSION>               Force the version to be used in the
-                                                changelog
-        --skip-invalid-commit                   Skip invalid commits instead of
-                                                failing
-        --dry-run                               Run the command without writing to the
-                                                changelog file, output the result in
-                                                STDOUT instead
-        --github-repo <REPO>                    GitHub repository name in format
-                                                'owner/repo'
+                                        DEFAULT
+    -h, --help                                     Prints help information
+    -v, --version                                  Prints version information
+    -c, --config                                   Path to the configuration file
+        --allow-dirty                              Allow to run in a dirty repository (having not commit changes in your reporitory)
+        --allow-branch <VALUES>                    List of branches that are allowed to be used to generate the changelog. Default is 'main'
+        --tag <VALUES>                             List of tags to include in the changelog
+        --pre-release [PREFIX]          beta       Indicate that the generated version is a pre-release version. Optionally, you can provide a prefix for the beta version. Default is 'beta'
+        --force-version <VERSION>                  Force the version to be used in the changelog
+        --skip-invalid-commit                      Skip invalid commits instead of failing
+        --dry-run                                  Run the command without writing to the changelog file, output the new version content to STDOUT instead
+        --remote-hostname <HOSTNAME>               Git remote hostname, e.g. github.com, gitlab.com
+        --remote-owner <OWNER>                     Git remote owner or organization name
+        --remote-repo <REPO>                       Git remote repository name
 
 COMMANDS:
     version

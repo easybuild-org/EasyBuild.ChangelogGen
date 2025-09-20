@@ -16,30 +16,54 @@ let tests =
                     test "resolveRemoteConfig priorize CLI arguments" {
                         let actual =
                             Verify.resolveRemoteConfig (
-                                GenerateSettings(GitHubRepo = Some "owner/repo")
+                                GenerateSettings(
+                                    RemoteHostname = Some "gitlab.com",
+                                    RemoteOwner = Some "owner",
+                                    RemoteRepo = Some "repo"
+                                )
                             )
 
                         let expected =
                             Ok(
                                 {
+                                    Hostname = "gitlab.com"
                                     Owner = "owner"
                                     Repository = "repo"
                                 }
-                                : GithubRemoteConfig
+                                : RemoteConfig
                             )
 
                         Expect.equal expected actual
                     }
 
-                    test "returns an error if CLI argument is not in the right format" {
-                        let actual =
-                            Verify.resolveRemoteConfig (GenerateSettings(GitHubRepo = Some "owner"))
+                    test "returns an error if not all `--remote-XXX` CLI arguments are provided" {
+                        // Test some combinations of missing arguments
+                        [
+                            Verify.resolveRemoteConfig (
+                                GenerateSettings(
+                                    RemoteHostname = Some "gitlab.com",
+                                    RemoteOwner = Some "owner"
+                                )
+                            )
 
-                        let expected =
-                            Error
-                                "Invalid format for --github-repo option, expected format is 'owner/repo'."
+                            Verify.resolveRemoteConfig (
+                                GenerateSettings(
+                                    RemoteHostname = Some "gitlab.com",
+                                    RemoteRepo = Some "repo"
+                                )
+                            )
 
-                        Expect.equal expected actual
+                            Verify.resolveRemoteConfig (
+                                GenerateSettings(RemoteOwner = Some "owner")
+                            )
+                        ]
+                        |> List.iter (fun actual ->
+                            let expected =
+                                Error
+                                    """When using --remote-hostname, --remote-owner and --remote-repo they must be all provided."""
+
+                            Expect.equal expected actual
+                        )
                     }
                 ]
         ]

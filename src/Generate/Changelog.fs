@@ -139,7 +139,7 @@ type Writer() =
 let private writeSection
     (writer: Writer)
     (label: string)
-    (githubRemote: GithubRemoteConfig)
+    (remote: RemoteConfig)
     (commits: CommitForRelease list)
     =
     if commits.Length > 0 then
@@ -149,8 +149,7 @@ let private writeSection
         let commits = commits |> List.sortBy (fun commit -> commit.SemanticCommit.Scope)
 
         for commit in commits do
-            let githubCommitUrl sha =
-                $"https://github.com/%s{githubRemote.Owner}/%s{githubRemote.Repository}/commit/%s{sha}"
+            let githubCommitUrl sha = $"%s{remote.BaseUrl}/commit/%s{sha}"
 
             let commitUrl = githubCommitUrl commit.OriginalCommit.Hash
 
@@ -178,7 +177,7 @@ let private writeSection
         writer.NewLine()
 
 let generateNewVersionSection
-    (githubRemote: GithubRemoteConfig)
+    (remote: RemoteConfig)
     (previousReleasedSha: string option)
     (releaseContext: BumpInfo)
     =
@@ -224,15 +223,15 @@ let generateNewVersionSection
             }
             releaseContext.CommitsForRelease
 
-    writeSection writer "🏗️ Breaking changes" githubRemote groupedCommits.BreakingChanges
-    writeSection writer "🚀 Features" githubRemote groupedCommits.Feats
-    writeSection writer "🐞 Bug Fixes" githubRemote groupedCommits.Fixes
-    writeSection writer "⚡ Performance Improvements" githubRemote groupedCommits.Perfs
+    writeSection writer "🏗️ Breaking changes" remote groupedCommits.BreakingChanges
+    writeSection writer "🚀 Features" remote groupedCommits.Feats
+    writeSection writer "🐞 Bug Fixes" remote groupedCommits.Fixes
+    writeSection writer "⚡ Performance Improvements" remote groupedCommits.Perfs
 
     match previousReleasedSha with
     | Some sha ->
         let compareUrl =
-            $"https://github.com/%s{githubRemote.Owner}/%s{githubRemote.Repository}/compare/%s{sha}..%s{releaseContext.LastCommitSha}"
+            $"%s{remote.BaseUrl}/compare/%s{sha}..%s{releaseContext.LastCommitSha}"
 
         $"<strong><small>[View changes on Github](%s{compareUrl})</small></strong>"
         |> writer.AppendLine
@@ -244,7 +243,7 @@ let generateNewVersionSection
     writer.ToText()
 
 let updateWithNewVersion
-    (githubRemote: GithubRemoteConfig)
+    (githubRemote: RemoteConfig)
     (releaseContext: BumpInfo)
     (changelogInfo: ChangelogInfo)
     =
