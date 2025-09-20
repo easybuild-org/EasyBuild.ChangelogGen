@@ -44,54 +44,54 @@ type Commit =
         RawBody: string
     }
 
-    static member Decoder: Decoder<Commit> =
-        Decode.object (fun get ->
-            {
-                Hash = get.Required.Field "hash" Decode.string
-                AbbrevHash = get.Required.Field "abbrev_hash" Decode.string
-                Author = get.Required.Field "author" Decode.string
-                ShortMessage = get.Required.Field "short_message" Decode.string
-                RawBody = get.Required.Field "long_message" Decode.string
-            }
-        )
-
 [<RequireQualifiedAccess>]
 type GetCommitsFilter =
     | All
     | From of string
 
 let readCommit (sha1: string) =
+    let delimiter = "----PARSER_DELIMITER----"
+
+    let gitFormat =
+        [
+            "%H" // commit hash
+            "%h" // abbreviated commit hash
+            "%an" // author name
+            "%s" // subject
+            "%B" // body / long message
+            "-" // We need an extra item otherwise, the body will have an additional new line at the end
+        ]
+        |> String.concat delimiter
+
+    let args =
+        CmdLine.empty
+        |> CmdLine.appendRaw "--no-pager"
+        |> CmdLine.appendRaw "show"
+        |> CmdLine.appendRaw $"--format={gitFormat}"
+        |> CmdLine.appendRaw "-s" // suppress diff output
+        |> CmdLine.appendRaw sha1
+        |> CmdLine.toString
+
     let struct (commitStdout, _) =
-        Command.ReadAsync(
-            "git",
-            CmdLine.empty
-            |> CmdLine.appendRaw "--no-pager"
-            |> CmdLine.appendRaw "show"
-            |> CmdLine.appendRaw
-                """--format="{
-  \"hash\": \"%H\",
-  \"abbrev_hash\": \"%h\",
-  \"author\": \"%an\",
-  \"short_message\": \"%s\",
-  \"long_message\": \"%B\"
-}"
-                """
-            |> CmdLine.appendRaw "-s" // suppress diff output
-            |> CmdLine.appendRaw sha1
-            |> CmdLine.toString
-        )
-        |> Async.AwaitTask
-        |> Async.RunSynchronously
+        Command.ReadAsync("git", args) |> Async.AwaitTask |> Async.RunSynchronously
 
-    match Decode.fromString Commit.Decoder commitStdout with
-    | Ok x -> x
-    | Error e ->
-        $"""Failed to parse JSON:
+    let commitStdout = commitStdout.Split(delimiter, StringSplitOptions.None)
 
+    if commitStdout.Length <> 6 then
+        failwith
+            $"""Failed to read commit {sha1}, unexpected output from git show
+
+Output was:
 {commitStdout}
+"""
 
-Error: {e}"""
-        |> failwith
+    {
+        Hash = commitStdout[0]
+        AbbrevHash = commitStdout[1]
+        Author = commitStdout[2]
+        ShortMessage = commitStdout[3]
+        RawBody = commitStdout[4]
+    }
 
 let getCommits (filter: GetCommitsFilter) =
     let commitFilter =

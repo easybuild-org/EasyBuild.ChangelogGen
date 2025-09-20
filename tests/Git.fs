@@ -33,6 +33,24 @@ let tests =
                 Expect.equal actual expected
             }
 
+            test "readCommit works for commits with quotes in the message" {
+                let actual = Git.readCommit "0cfd2cbead888deff33a7ee839416992ebe9fecb"
+
+                let expected: Git.Commit =
+                    {
+                        Hash = "0cfd2cbead888deff33a7ee839416992ebe9fecb"
+                        AbbrevHash = "0cfd2cb"
+                        Author = "Maxime Mangel"
+                        ShortMessage =
+                            "feat: add `--skip-merge-commit` allowing to skip commit starting with \"Merge \""
+                        RawBody =
+                            """feat: add `--skip-merge-commit` allowing to skip commit starting with "Merge "
+"""
+                    }
+
+                Expect.equal actual expected
+            }
+
             testList
                 "tryGetRemoteFromUrl"
                 [
