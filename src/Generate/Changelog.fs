@@ -233,7 +233,9 @@ let generateNewVersionSection
         let compareUrl =
             $"%s{remote.BaseUrl}/compare/%s{sha}..%s{releaseContext.LastCommitSha}"
 
-        $"<strong><small>[View changes on Github](%s{compareUrl})</small></strong>"
+        let remoteName = remote.NameOnly |> capitalizeFirstLetter
+
+        $"<strong><small>[View changes on %s{remoteName}](%s{compareUrl})</small></strong>"
         |> writer.AppendLine
 
         writer.NewLine()

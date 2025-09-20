@@ -1,7 +1,5 @@
 module EasyBuild.ChangelogGen.Types
 
-open Thoth.Json.Core
-
 type RemoteConfig =
     {
         Hostname: string
@@ -14,3 +12,16 @@ type RemoteConfig =
     /// </summary>
     /// <returns>Base URL</returns>
     member this.BaseUrl = $"https://%s{this.Hostname}/%s{this.Owner}/%s{this.Repository}"
+
+    /// <summary>
+    /// Returns the name of the remote based on the hostname.
+    ///
+    /// E.g. for <c>github.com</c> it returns <c>github</c>
+    /// </summary>
+    /// <returns></returns>
+    member this.NameOnly =
+        this.Hostname
+        |> Seq.toList
+        |> List.takeWhile (fun c -> c <> '.')
+        |> List.map string
+        |> String.concat ""

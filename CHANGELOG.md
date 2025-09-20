@@ -14,7 +14,7 @@ This changelog is generated using [EasyBuild.ChangelogGen](https://github.com/ea
 
 ### 🏗️ Breaking changes
 
-* Support others providers than Github for generating the remote URLs ([43d4535](https://github.com/easybuild-org/EasyBuild.ChangelogGen/commit/43d4535bf6c1fba80f9e6a3484956ac3cb8b26a3))
+* Support other providers than Github for generating the remote URLs ([43d4535](https://github.com/easybuild-org/EasyBuild.ChangelogGen/commit/43d4535bf6c1fba80f9e6a3484956ac3cb8b26a3))
 
 ### 🚀 Features
 
