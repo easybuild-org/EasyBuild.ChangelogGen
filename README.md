@@ -36,6 +36,7 @@ OPTIONS:
         --pre-release [PREFIX]          beta       Indicate that the generated version is a pre-release version. Optionally, you can provide a prefix for the beta version. Default is 'beta'
         --force-version <VERSION>                  Force the version to be used in the changelog
         --skip-invalid-commit                      Skip invalid commits instead of failing
+        --skip-merge-commit                        Skip merge commits when generating the changelog (commit messages starting with 'Merge ')
         --dry-run                                  Run the command without writing to the changelog file, output the new version content to STDOUT instead
         --remote-hostname <HOSTNAME>               Git remote hostname, e.g. github.com, gitlab.com
         --remote-owner <OWNER>                     Git remote owner or organization name

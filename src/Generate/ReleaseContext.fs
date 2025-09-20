@@ -146,6 +146,9 @@ let compute
                 if settings.SkipInvalidCommit then
                     Log.warning $"Failed to parse commit message: {error}"
                     None
+                else if settings.SkipMergeCommit && commit.RawBody.StartsWith("Merge ") then
+                    // Skip merge commits
+                    None
                 else
                     failwith error
         )

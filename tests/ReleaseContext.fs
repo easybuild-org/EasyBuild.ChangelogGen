@@ -441,6 +441,140 @@ Tag: cli"
 
                 Expect.equal actual expected
             }
+
+            test "If --skip-invalid-commit is false, fail on invalid commit message" {
+                let settings =
+                    GenerateSettings(Changelog = "CHANGELOG.md", SkipInvalidCommit = false)
+
+                let changelogInfo =
+                    {
+                        File = FileInfo(Path.GetTempFileName())
+                        Content = STANDARD_CHANGELOG
+                        Versions = [ SemVersion(0, 0, 0) ]
+                    }
+
+                let commits: Git.Commit list =
+                    [
+                        Git.Commit.Create(
+                            "49c0699af98a67f1e8efcac8b1467b283a244aa8",
+                            "this is not a valid commit message"
+                        )
+                    ]
+
+                Expect.throws (fun () ->
+                    ReleaseContext.compute
+                        settings
+                        changelogInfo
+                        commits
+                        CommitParserConfig.Default
+                    |> ignore
+                )
+            }
+
+            test "If --skip-invalid-commit is true, skip invalid commit message" {
+                let defaultGenerateSettings = GenerateSettings(Changelog = "CHANGELOG.md")
+
+                let changelogInfo =
+                    {
+                        File = FileInfo(Path.GetTempFileName())
+                        Content = STANDARD_CHANGELOG
+                        Versions = [ SemVersion(0, 0, 0) ]
+                    }
+
+                let commits: Git.Commit list =
+                    [
+                        Git.Commit.Create(
+                            "49c0699af98a67f1e8efcac8b1467b283a244aa8",
+                            "fix: fix a bug"
+                        )
+                        Git.Commit.Create(
+                            "43c60e4fc9585a9f235ab6a6dd97c4c1cf945e46",
+                            "this is not a valid commit message"
+                        )
+                    ]
+
+                let actual =
+                    ReleaseContext.compute
+                        defaultGenerateSettings
+                        changelogInfo
+                        commits
+                        CommitParserConfig.Default
+
+                let expected =
+                    {
+                        NewVersion = SemVersion(0, 0, 1)
+                        CommitsForRelease =
+                            [
+                                {
+                                    OriginalCommit = commits[0]
+                                    SemanticCommit =
+                                        Parser.tryParseCommitMessage
+                                            CommitParserConfig.Default
+                                            commits[0].RawBody
+                                        |> Result.valueOr failwith
+                                }
+                            ]
+                        LastCommitSha = "49c0699af98a67f1e8efcac8b1467b283a244aa8"
+                    }
+                    |> BumpRequired
+
+                Expect.equal actual expected
+            }
+
+            test "If --skip-merge-commit is true, skip merge commits" {
+                let defaultGenerateSettings =
+                    GenerateSettings(Changelog = "CHANGELOG.md", SkipMergeCommit = true)
+
+                let changelogInfo =
+                    {
+                        File = FileInfo(Path.GetTempFileName())
+                        Content = STANDARD_CHANGELOG
+                        Versions = [ SemVersion(0, 0, 0) ]
+                    }
+
+                let commits: Git.Commit list =
+                    [
+                        Git.Commit.Create(
+                            "49c0699af98a67f1e8efcac8b1467b283a244aa8",
+                            "fix: fix a bug"
+                        )
+                        Git.Commit.Create(
+                            "43c60e4fc9585a9f235ab6a6dd97c4c1cf945e46",
+                            "Merge pull request #123 from feature/awesome-feature"
+                        )
+                        Git.Commit.Create(
+                            "b7eafe7744e4738d9578c09e1d128bbb2f5c40d3",
+                            "Merge branch 'develop' into feature/awesome-feature"
+                        )
+                    ]
+
+                let actual =
+                    ReleaseContext.compute
+                        defaultGenerateSettings
+                        changelogInfo
+                        commits
+                        CommitParserConfig.Default
+
+                let expected =
+                    {
+                        NewVersion = SemVersion(0, 0, 1)
+                        CommitsForRelease =
+                            [
+                                {
+                                    OriginalCommit = commits[0]
+                                    SemanticCommit =
+                                        Parser.tryParseCommitMessage
+                                            CommitParserConfig.Default
+                                            commits[0].RawBody
+                                        |> Result.valueOr failwith
+                                }
+                            ]
+                        LastCommitSha = "49c0699af98a67f1e8efcac8b1467b283a244aa8"
+                    }
+                    |> BumpRequired
+
+                Expect.equal actual expected
+            }
         ]
 
 let private computeVersionTests =

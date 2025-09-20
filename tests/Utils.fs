@@ -14,6 +14,8 @@ module Expect =
 
     let isError actual = Expect.isError actual ""
 
+    let throws f = Expect.throws f ""
+
 type Git.Commit with
 
     static member Create
