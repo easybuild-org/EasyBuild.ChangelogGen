@@ -150,6 +150,21 @@ let compute
                     // Skip merge commits
                     None
                 else
+                    let error =
+                        $"Failed to parse commit message:
+
+==============
+    Commit
+==============
+
+%s{commit.RawBody}
+
+==============
+    Error
+==============
+
+%s{error}"
+
                     failwith error
         )
         // Only include commits that have the type feat, fix or is marked as a breaking change
