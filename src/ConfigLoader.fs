@@ -4,7 +4,6 @@ open EasyBuild.CommitParser.Types
 open System.IO
 open Thoth.Json.Core
 open Thoth.Json.Newtonsoft
-open EasyBuild.ChangelogGen.Types
 
 type Config =
     {

@@ -28,6 +28,11 @@ let tests =
                         RawBody =
                             "chore: Move test to Fable.Pyxpecto to prepare for Fable support in the future + and more low level Api
 "
+                        Files =
+                            [
+                                "src/Parser.fs"
+                                "tests/Changelog.fs"
+                            ]
                     }
 
                 Expect.equal actual expected
@@ -46,6 +51,14 @@ let tests =
                         RawBody =
                             """feat: add `--skip-merge-commit` allowing to skip commit starting with "Merge "
 """
+                        Files =
+                            [
+                                "README.md"
+                                "src/Generate/ReleaseContext.fs"
+                                "src/Generate/Types.fs"
+                                "tests/ReleaseContext.fs"
+                                "tests/Utils.fs"
+                            ]
                     }
 
                 Expect.equal actual expected

@@ -2,9 +2,7 @@ module EasyBuild.ChangelogGen.Generate.Changelog
 
 open System
 open System.IO
-open FsToolkit.ErrorHandling
 open Semver
-open EasyBuild.ChangelogGen
 open EasyBuild.ChangelogGen.Types
 open EasyBuild.ChangelogGen.Generate.Types
 open System.Text.RegularExpressions
@@ -39,7 +37,7 @@ let findVersions (content: string) =
     )
     |> Seq.toList
 
-let load (settings: GenerateSettings) =
+let tryLoad (settings: GenerateSettings) =
     let changelogFile = FileInfo settings.Changelog
 
     if not changelogFile.Exists then
@@ -49,6 +47,7 @@ let load (settings: GenerateSettings) =
             File = changelogFile
             Content = EMPTY_CHANGELOG
             Versions = []
+            Metadata = ChangelogMetadata()
         }
         |> Ok
 
@@ -61,6 +60,7 @@ let load (settings: GenerateSettings) =
             File = changelogFile
             Content = changelogContent
             Versions = findVersions changelogContent
+            Metadata = ChangelogMetadata.Load changelogContent
         }
         |> Ok
 
@@ -250,7 +250,10 @@ let updateWithNewVersion
     (changelogInfo: ChangelogInfo)
     =
     let newVersionLines =
-        generateNewVersionSection githubRemote changelogInfo.LastReleaseCommit releaseContext
+        generateNewVersionSection
+            githubRemote
+            changelogInfo.Metadata.LastCommitReleased
+            releaseContext
 
     let rec removeConsecutiveEmptyLines
         (previousLineWasBlank: bool)
@@ -268,31 +271,24 @@ let updateWithNewVersion
                     (result @ [ line ])
                     rest
 
-    let hasEasyBuildMetadata =
-        changelogInfo.Lines |> Seq.contains "<!-- EasyBuild: START -->"
+    // Update metadata with the new information
+    changelogInfo.Metadata.LastCommitReleased <- Some releaseContext.LastCommitSha
 
     let newChangelogContent =
         [
-            // Add title and description of the original changelog
-            if hasEasyBuildMetadata then
-                yield!
-                    changelogInfo.Lines
-                    |> Seq.takeWhile (fun line -> "<!-- EasyBuild: START -->" <> line)
-            else
-                yield!
-                    changelogInfo.Lines |> Seq.takeWhile (fun line -> not (line.StartsWith("##")))
+            changelogInfo.Description
 
-            // Ad EasyBuild metadata
-            "<!-- EasyBuild: START -->"
-            $"<!-- last_commit_released: {releaseContext.LastCommitSha} -->"
-            "<!-- EasyBuild: END -->"
+            // Add EasyBuild metadata
+            "<!-- EasyBuild: START"
+            changelogInfo.Metadata.ToConfiguration()
+            "EasyBuild: END -->"
             ""
 
             // New version
             newVersionLines
 
             // Add the rest of the changelog
-            yield! changelogInfo.Lines |> Seq.skipWhile (fun line -> not (line.StartsWith("##")))
+            changelogInfo.VersionsText
         ]
         |> removeConsecutiveEmptyLines false []
         |> String.concat "\n"

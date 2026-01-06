@@ -4,8 +4,6 @@ module Git
 open System
 open SimpleExec
 open BlackFox.CommandLine
-open Thoth.Json.Core
-open Thoth.Json.Newtonsoft
 
 let getHeadBranchName () =
     let struct (standardOutput, _) =
@@ -14,6 +12,20 @@ let getHeadBranchName () =
             CmdLine.empty
             |> CmdLine.appendRaw "rev-parse"
             |> CmdLine.appendPrefix "--abbrev-ref" "HEAD"
+            |> CmdLine.toString
+        )
+        |> Async.AwaitTask
+        |> Async.RunSynchronously
+
+    standardOutput.Trim()
+
+let getTopLevelDirectory () =
+    let struct (standardOutput, _) =
+        Command.ReadAsync(
+            "git",
+            CmdLine.empty
+            |> CmdLine.appendRaw "rev-parse"
+            |> CmdLine.appendRaw "--show-toplevel"
             |> CmdLine.toString
         )
         |> Async.AwaitTask
@@ -42,6 +54,7 @@ type Commit =
         Author: string
         ShortMessage: string
         RawBody: string
+        Files: string list
     }
 
 [<RequireQualifiedAccess>]
@@ -59,7 +72,7 @@ let readCommit (sha1: string) =
             "%an" // author name
             "%s" // subject
             "%B" // body / long message
-            "-" // We need an extra item otherwise, the body will have an additional new line at the end
+            "END_METADATA" // We need an extra item otherwise, the body will have an additional new line at the end
         ]
         |> String.concat delimiter
 
@@ -68,29 +81,50 @@ let readCommit (sha1: string) =
         |> CmdLine.appendRaw "--no-pager"
         |> CmdLine.appendRaw "show"
         |> CmdLine.appendRaw $"--format={gitFormat}"
-        |> CmdLine.appendRaw "-s" // suppress diff output
+        |> CmdLine.appendRaw "--name-only" // display the files changed in the commit
         |> CmdLine.appendRaw sha1
         |> CmdLine.toString
 
     let struct (commitStdout, _) =
         Command.ReadAsync("git", args) |> Async.AwaitTask |> Async.RunSynchronously
 
-    let commitStdout = commitStdout.Split(delimiter, StringSplitOptions.None)
+    let commitStdout = commitStdout.Split("END_METADATA", StringSplitOptions.None)
 
-    if commitStdout.Length <> 6 then
+    let failToReadCommit context =
         failwith
             $"""Failed to read commit {sha1}, unexpected output from git show
 
 Output was:
 {commitStdout}
+
+Context:
+{context}
 """
 
+    if commitStdout.Length <> 2 then
+        failToReadCommit "Unexpected number of sections in git show output"
+
+    let metadatas = commitStdout[0].Split(delimiter)
+
+    let files =
+        if commitStdout[1].Trim().Length = 0 then
+            []
+        else
+            commitStdout[1]
+                .Replace("\r", "")
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            |> Array.toList
+
+    if metadatas.Length <> 6 then
+        failToReadCommit "Unexpected number of metadata fields in git show output"
+
     {
-        Hash = commitStdout[0]
-        AbbrevHash = commitStdout[1]
-        Author = commitStdout[2]
-        ShortMessage = commitStdout[3]
-        RawBody = commitStdout[4]
+        Hash = metadatas[0]
+        AbbrevHash = metadatas[1]
+        Author = metadatas[2]
+        ShortMessage = metadatas[3]
+        RawBody = metadatas[4]
+        Files = files
     }
 
 let getCommits (filter: GetCommitsFilter) =

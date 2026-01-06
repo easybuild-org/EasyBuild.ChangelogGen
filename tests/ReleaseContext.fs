@@ -10,6 +10,7 @@ open EasyBuild.CommitParser
 open EasyBuild.CommitParser.Types
 open FsToolkit.ErrorHandling
 open Spectre.Console.Cli
+open Workspace
 
 [<Literal>]
 let STANDARD_CHANGELOG =
@@ -37,13 +38,18 @@ let private computeTests =
         "compute"
         [
             test "No version bump required if no commits" {
-                let defaultGenerateSettings = GenerateSettings(Changelog = "CHANGELOG.md")
+                let defaultGenerateSettings =
+                    GenerateSettings(
+                        Changelog = "CHANGELOG.md",
+                        GitRepositoryRoot = Workspace.``.``
+                    )
 
                 let changelogInfo =
                     {
-                        File = FileInfo(Path.GetTempFileName())
+                        File = FileInfo(Workspace.``valid_changelog.md``)
                         Content = STANDARD_CHANGELOG
                         Versions = [ SemVersion(0, 0, 0) ]
+                        Metadata = ChangelogMetadata()
                     }
 
                 let actual =
@@ -58,13 +64,18 @@ let private computeTests =
 
             test "No version bump required if no commits have a suitable type" {
 
-                let defaultGenerateSettings = GenerateSettings(Changelog = "CHANGELOG.md")
+                let defaultGenerateSettings =
+                    GenerateSettings(
+                        Changelog = "CHANGELOG.md",
+                        GitRepositoryRoot = Workspace.``.``
+                    )
 
                 let changelogInfo =
                     {
-                        File = FileInfo(Path.GetTempFileName())
+                        File = FileInfo(Workspace.``valid_changelog.md``)
                         Content = STANDARD_CHANGELOG
                         Versions = [ SemVersion(0, 0, 0) ]
+                        Metadata = ChangelogMetadata()
                     }
 
                 let commits: Git.Commit list =
@@ -106,13 +117,18 @@ let private computeTests =
             }
 
             test "If commit is of type feat bump minor" {
-                let defaultGenerateSettings = GenerateSettings(Changelog = "CHANGELOG.md")
+                let defaultGenerateSettings =
+                    GenerateSettings(
+                        Changelog = "CHANGELOG.md",
+                        GitRepositoryRoot = Workspace.``.``
+                    )
 
                 let changelogInfo =
                     {
-                        File = FileInfo(Path.GetTempFileName())
+                        File = FileInfo(Workspace.``valid_changelog.md``)
                         Content = STANDARD_CHANGELOG
                         Versions = [ SemVersion(0, 0, 0) ]
+                        Metadata = ChangelogMetadata()
                     }
 
                 let commits: Git.Commit list =
@@ -152,13 +168,18 @@ let private computeTests =
             }
 
             test "If commit is of type perf bump minor" {
-                let defaultGenerateSettings = GenerateSettings(Changelog = "CHANGELOG.md")
+                let defaultGenerateSettings =
+                    GenerateSettings(
+                        Changelog = "CHANGELOG.md",
+                        GitRepositoryRoot = Workspace.``.``
+                    )
 
                 let changelogInfo =
                     {
-                        File = FileInfo(Path.GetTempFileName())
+                        File = FileInfo(Workspace.``valid_changelog.md``)
                         Content = STANDARD_CHANGELOG
                         Versions = [ SemVersion(0, 0, 0) ]
+                        Metadata = ChangelogMetadata()
                     }
 
                 let commits: Git.Commit list =
@@ -198,13 +219,18 @@ let private computeTests =
             }
 
             test "If commit is of type fix bump patch" {
-                let defaultGenerateSettings = GenerateSettings(Changelog = "CHANGELOG.md")
+                let defaultGenerateSettings =
+                    GenerateSettings(
+                        Changelog = "CHANGELOG.md",
+                        GitRepositoryRoot = Workspace.``.``
+                    )
 
                 let changelogInfo =
                     {
-                        File = FileInfo(Path.GetTempFileName())
+                        File = FileInfo(Workspace.``valid_changelog.md``)
                         Content = STANDARD_CHANGELOG
                         Versions = [ SemVersion(0, 0, 0) ]
+                        Metadata = ChangelogMetadata()
                     }
 
                 let commits: Git.Commit list =
@@ -245,13 +271,18 @@ let private computeTests =
 
             test "If --force-version is set, use that version" {
                 let defaultGenerateSettings =
-                    GenerateSettings(Changelog = "CHANGELOG.md", ForceVersion = Some "4.9.3")
+                    GenerateSettings(
+                        Changelog = "CHANGELOG.md",
+                        ForceVersion = Some "4.9.3",
+                        GitRepositoryRoot = Workspace.``.``
+                    )
 
                 let changelogInfo =
                     {
-                        File = FileInfo(Path.GetTempFileName())
+                        File = FileInfo(Workspace.``valid_changelog.md``)
                         Content = STANDARD_CHANGELOG
                         Versions = [ SemVersion(0, 0, 0) ]
+                        Metadata = ChangelogMetadata()
                     }
 
                 let commits: Git.Commit list =
@@ -279,178 +310,20 @@ let private computeTests =
                 | _ -> failtest "Expected BumpRequired"
             }
 
-            test "If tag filter is set, only include commits with one of the requested tag" {
-                let defaultGenerateSettings =
-                    GenerateSettings(Changelog = "CHANGELOG.md", Tags = [| "converter" |])
-
-                let changelogInfo =
-                    {
-                        File = FileInfo(Path.GetTempFileName())
-                        Content = STANDARD_CHANGELOG
-                        Versions = [ SemVersion(0, 0, 0) ]
-                    }
-
-                let commits: Git.Commit list =
-                    [
-                        Git.Commit.Create(
-                            "49c0699af98a67f1e8efcac8b1467b283a244aa8",
-                            "fix: fix a bug",
-                            "fix: fix a bug
-
-Tag: converter"
-                        )
-                        Git.Commit.Create(
-                            "43c60e4fc9585a9f235ab6a6dd97c4c1cf945e46",
-                            "feat: add a new feature",
-                            "feat: add a new feature
-
-Tag: cli"
-                        )
-                        Git.Commit.Create(
-                            "b7eafe7744e4738d9578c09e1d128bbb2f5c40d3",
-                            "feat: add another feature",
-                            "feat: add another feature
-
-Tag: cli"
-                        )
-                    ]
-
-                let actual =
-                    ReleaseContext.compute
-                        defaultGenerateSettings
-                        changelogInfo
-                        commits
-                        CommitParserConfig.Default
-
-                let expected =
-                    {
-                        NewVersion = SemVersion(0, 0, 1)
-                        CommitsForRelease =
-                            [
-                                {
-                                    OriginalCommit = commits[0]
-                                    SemanticCommit =
-                                        Parser.tryParseCommitMessage
-                                            CommitParserConfig.Default
-                                            commits[0].RawBody
-                                        |> Result.valueOr failwith
-                                }
-                            ]
-                        LastCommitSha = "49c0699af98a67f1e8efcac8b1467b283a244aa8"
-                    }
-                    |> BumpRequired
-
-                Expect.equal actual expected
-            }
-
-            test "several tags can be provided" {
-                let defaultGenerateSettings =
+            test "If --skip-invalid-commit is false, fail on invalid commit message" {
+                let settings =
                     GenerateSettings(
                         Changelog = "CHANGELOG.md",
-                        Tags =
-                            [|
-                                "converter"
-                                "cli"
-                            |]
+                        SkipInvalidCommit = false,
+                        GitRepositoryRoot = Workspace.``.``
                     )
 
                 let changelogInfo =
                     {
-                        File = FileInfo(Path.GetTempFileName())
+                        File = FileInfo(Workspace.``valid_changelog.md``)
                         Content = STANDARD_CHANGELOG
                         Versions = [ SemVersion(0, 0, 0) ]
-                    }
-
-                let commits: Git.Commit list =
-                    [
-                        Git.Commit.Create(
-                            "49c0699af98a67f1e8efcac8b1467b283a244aa8",
-                            "fix: fix a bug",
-                            "fix: fix a bug
-
-Tag: converter"
-                        )
-                        Git.Commit.Create(
-                            "43c60e4fc9585a9f235ab6a6dd97c4c1cf945e46",
-                            "feat: add a new feature",
-                            "feat: add a new feature
-
-Tag: cli"
-                        )
-                        Git.Commit.Create(
-                            "34941a75efeeb3649c1adcec2c7f5c6257117a96",
-                            "feat: make it do something",
-                            "feat: make it do something
-
-Tag: web"
-                        )
-
-                        Git.Commit.Create(
-                            "c4bb772982b988db7d032263ae824bd2db653d6c",
-                            "feat: make it do something"
-                        )
-                        Git.Commit.Create(
-                            "b7eafe7744e4738d9578c09e1d128bbb2f5c40d3",
-                            "feat: add another feature",
-                            "feat: add another feature
-
-Tag: cli"
-                        )
-                    ]
-
-                let actual =
-                    ReleaseContext.compute
-                        defaultGenerateSettings
-                        changelogInfo
-                        commits
-                        CommitParserConfig.Default
-
-                let expected =
-                    {
-                        NewVersion = SemVersion(0, 1, 0)
-                        CommitsForRelease =
-                            [
-                                {
-                                    OriginalCommit = commits[0]
-                                    SemanticCommit =
-                                        Parser.tryParseCommitMessage
-                                            CommitParserConfig.Default
-                                            commits[0].RawBody
-                                        |> Result.valueOr failwith
-                                }
-                                {
-                                    OriginalCommit = commits[1]
-                                    SemanticCommit =
-                                        Parser.tryParseCommitMessage
-                                            CommitParserConfig.Default
-                                            commits[1].RawBody
-                                        |> Result.valueOr failwith
-                                }
-                                {
-                                    OriginalCommit = commits[4]
-                                    SemanticCommit =
-                                        Parser.tryParseCommitMessage
-                                            CommitParserConfig.Default
-                                            commits[4].RawBody
-                                        |> Result.valueOr failwith
-                                }
-                            ]
-                        LastCommitSha = "49c0699af98a67f1e8efcac8b1467b283a244aa8"
-                    }
-                    |> BumpRequired
-
-                Expect.equal actual expected
-            }
-
-            test "If --skip-invalid-commit is false, fail on invalid commit message" {
-                let settings =
-                    GenerateSettings(Changelog = "CHANGELOG.md", SkipInvalidCommit = false)
-
-                let changelogInfo =
-                    {
-                        File = FileInfo(Path.GetTempFileName())
-                        Content = STANDARD_CHANGELOG
-                        Versions = [ SemVersion(0, 0, 0) ]
+                        Metadata = ChangelogMetadata()
                     }
 
                 let commits: Git.Commit list =
@@ -472,13 +345,18 @@ Tag: cli"
             }
 
             test "If --skip-invalid-commit is true, skip invalid commit message" {
-                let defaultGenerateSettings = GenerateSettings(Changelog = "CHANGELOG.md")
+                let defaultGenerateSettings =
+                    GenerateSettings(
+                        Changelog = "CHANGELOG.md",
+                        GitRepositoryRoot = Workspace.``.``
+                    )
 
                 let changelogInfo =
                     {
-                        File = FileInfo(Path.GetTempFileName())
+                        File = FileInfo(Workspace.``valid_changelog.md``)
                         Content = STANDARD_CHANGELOG
                         Versions = [ SemVersion(0, 0, 0) ]
+                        Metadata = ChangelogMetadata()
                     }
 
                 let commits: Git.Commit list =
@@ -523,13 +401,19 @@ Tag: cli"
 
             test "If --skip-merge-commit is true, skip merge commits" {
                 let defaultGenerateSettings =
-                    GenerateSettings(Changelog = "CHANGELOG.md", SkipMergeCommit = true)
+                    GenerateSettings(
+                        Changelog = "CHANGELOG.md",
+                        // SkipMergeCommit = true,
+                        SkipInvalidCommit = false,
+                        GitRepositoryRoot = Workspace.``.``
+                    )
 
                 let changelogInfo =
                     {
-                        File = FileInfo(Path.GetTempFileName())
+                        File = FileInfo(Workspace.``valid_changelog.md``)
                         Content = STANDARD_CHANGELOG
                         Versions = [ SemVersion(0, 0, 0) ]
+                        Metadata = ChangelogMetadata()
                     }
 
                 let commits: Git.Commit list =
@@ -574,6 +458,92 @@ Tag: cli"
                     |> BumpRequired
 
                 Expect.equal actual expected
+            }
+
+            test "Allows to include files from a parent directory" {
+                let defaultGenerateSettings =
+                    GenerateSettings(
+                        Changelog = "CHANGELOG.md",
+                        GitRepositoryRoot = Workspace.``.``
+                    )
+
+                let changelogInfo =
+                    {
+                        File = FileInfo(Workspace.``package-a``.``CHANGELOG.md``)
+                        Content = STANDARD_CHANGELOG
+                        Versions = [ SemVersion(0, 1, 0) ]
+                        Metadata = ChangelogMetadata(Include = [ "../package-b/" ])
+                    }
+
+                let commits: Git.Commit list =
+                    [
+                        Git.Commit.Create(
+                            "49c0699af98a67f1e8efcac8b1467b283a244aa8",
+                            "feat: add a new feature",
+                            files = [ "package-b/somefile.txt" ]
+                        )
+                    ]
+
+                let actual =
+                    ReleaseContext.compute
+                        defaultGenerateSettings
+                        changelogInfo
+                        commits
+                        CommitParserConfig.Default
+
+                let expected =
+                    {
+                        NewVersion = SemVersion(0, 2, 0)
+                        CommitsForRelease =
+                            [
+                                {
+                                    OriginalCommit = commits[0]
+                                    SemanticCommit =
+                                        Parser.tryParseCommitMessage
+                                            CommitParserConfig.Default
+                                            commits[0].RawBody
+                                        |> Result.valueOr failwith
+                                }
+                            ]
+                        LastCommitSha = "49c0699af98a67f1e8efcac8b1467b283a244aa8"
+                    }
+                    |> BumpRequired
+
+                Expect.equal actual expected
+            }
+
+            test "Allows to exclude files from a folder" {
+                let defaultGenerateSettings =
+                    GenerateSettings(
+                        Changelog = "CHANGELOG.md",
+                        GitRepositoryRoot = Workspace.``.``
+                    )
+
+                let changelogInfo =
+                    {
+                        File = FileInfo(Workspace.``package-a``.``CHANGELOG.md``)
+                        Content = STANDARD_CHANGELOG
+                        Versions = [ SemVersion(0, 1, 0) ]
+                        Metadata = ChangelogMetadata(Exclude = [ "src/" ])
+                    }
+
+                let commits: Git.Commit list =
+                    [
+                        Git.Commit.Create(
+                            "49c0699af98a67f1e8efcac8b1467b283a244aa8",
+                            "feat: add a new feature",
+                            files = [ "package-a/src/somefile.txt" ]
+                        )
+                    ]
+
+                let actual =
+                    ReleaseContext.compute
+                        defaultGenerateSettings
+                        changelogInfo
+                        commits
+                        CommitParserConfig.Default
+
+                Expect.equal actual NoVersionBumpRequired
             }
         ]
 

@@ -19,7 +19,8 @@ type GenerateCommand() =
                 // Apply automatic resolution of remote config if needed
                 let! remoteConfig = Verify.resolveRemoteConfig settings
 
-                let! changelogInfo = Changelog.load settings
+                let! changelogInfo = Changelog.tryLoad settings
+
                 do! Verify.dirty settings
                 do! Verify.branch settings
                 // do! Verify.options settings changelogInfo
@@ -38,7 +39,7 @@ type GenerateCommand() =
                         let newVersionContent =
                             Changelog.generateNewVersionSection
                                 remoteConfig
-                                changelogInfo.LastReleaseCommit
+                                changelogInfo.Metadata.LastCommitReleased
                                 bumpInfo
 
                         Log.info "Dry run enabled, new version content:"

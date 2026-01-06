@@ -4,10 +4,13 @@ open Semver
 open EasyBuild.CommitParser
 open EasyBuild.CommitParser.Types
 open EasyBuild.ChangelogGen.Generate.Types
+open DotNet.Globbing
+open Microsoft.Extensions.FileSystemGlobbing
+open System.IO
 
 let getCommits (settings: GenerateSettings) (changelog: ChangelogInfo) =
     let commitFilter =
-        match changelog.LastReleaseCommit with
+        match changelog.Metadata.LastCommitReleased with
         | Some lastReleasedCommit -> Git.GetCommitsFilter.From lastReleasedCommit
         | None -> Git.GetCommitsFilter.All
 
@@ -124,6 +127,15 @@ let computeVersion
             else
                 None
 
+[<RequireQualifiedAccess>]
+module Matcher =
+
+    let inline addIncludePatterns (matcher: Matcher) (patterns: string list) =
+        matcher.AddIncludePatterns(patterns)
+
+    let inline addExcludePatterns (matcher: Matcher) (patterns: string list) =
+        matcher.AddExcludePatterns(patterns)
+
 let compute
     (settings: GenerateSettings)
     (changelog: ChangelogInfo)
@@ -177,16 +189,38 @@ let compute
         // Only keep the commits that have the tags we are looking for
         // or all commits if no tags are provided
         |> List.filter (fun commit ->
-            // If no tags are provided, include all commits
-            if settings.Tags.Length = 0 then
-                true
-            else
-                settings.Tags
-                |> Array.exists (fun searchedTag ->
-                    match Map.tryFind "Tag" commit.SemanticCommit.Footers with
-                    | Some tags -> tags |> List.contains searchedTag
-                    | None -> false
-                )
+            // We need to modify the "context" of the matcher to be relative to the git
+            // repository root. This is because when doing `../XXXX` patterns we need to
+            // escape from the matcher.
+            // By using, Git repository root as reference, we can modify the include patterns
+            // to be relative to that root and allows to include files from outside the current
+            // CHANGELOG directory.
+            let relativeSourcePath =
+                Path.GetRelativePath(settings.GitRepositoryRoot, changelog.File.DirectoryName)
+
+            let matcher = Matcher()
+            // By default, we include all files under the current CHANGELOG directory
+            matcher.AddInclude(relativeSourcePath + "/**/*") |> ignore
+
+            let resolveRelativePattern (pattern: string) =
+                let absolutePath =
+                    Path.GetFullPath(Path.Combine(changelog.File.DirectoryName, pattern))
+
+                Path.GetRelativePath(settings.GitRepositoryRoot, absolutePath)
+
+            changelog.Metadata.Include
+            |> List.map resolveRelativePattern
+            |> Matcher.addIncludePatterns matcher
+
+            changelog.Metadata.Exclude
+            |> List.map resolveRelativePattern
+            |> Matcher.addExcludePatterns matcher
+
+            let gitFiles =
+                commit.OriginalCommit.Files
+                |> List.map (fun filePath -> settings.GitRepositoryRoot + "/" + filePath)
+
+            matcher.Match(settings.GitRepositoryRoot, gitFiles).HasMatches
         )
 
     let refVersion = changelog.LastVersion

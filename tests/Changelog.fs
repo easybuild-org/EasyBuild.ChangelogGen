@@ -72,7 +72,7 @@ let private loadTests =
                 let actual =
                     let settings = GenerateSettings(Changelog = "THIS_CHANGELOG_DOENST_EXIST.md")
 
-                    Changelog.load settings
+                    Changelog.tryLoad settings
 
                 match actual with
                 | Ok actual ->
@@ -85,7 +85,21 @@ let private loadTests =
                 let actual =
                     let settings = GenerateSettings(Changelog = Workspace.``valid_changelog.md``)
 
-                    Changelog.load settings
+                    Changelog.tryLoad settings
+
+                match actual with
+                | Ok actual ->
+                    Expect.isNotEmpty actual.Content
+                    Expect.equal actual.LastVersion (Semver.SemVersion(1, 0, 0))
+                | Error _ -> failwith "Expected Ok"
+            }
+
+            test "works if changelog file exists (old metadata format)" {
+                let actual =
+                    let settings =
+                        GenerateSettings(Changelog = Workspace.``valid_changelog_old_metadata.md``)
+
+                    Changelog.tryLoad settings
 
                 match actual with
                 | Ok actual ->
@@ -98,7 +112,21 @@ let private loadTests =
                 let actual =
                     let settings = GenerateSettings(Changelog = Workspace.``valid_no_version.md``)
 
-                    Changelog.load settings
+                    Changelog.tryLoad settings
+
+                match actual with
+                | Ok actual ->
+                    Expect.isNotEmpty actual.Content
+                    Expect.equal actual.LastVersion (Semver.SemVersion(0, 0, 0))
+                | Error _ -> failwith "Expected Ok"
+            }
+
+            test "works for changelog without version (old metadata format)" {
+                let actual =
+                    let settings =
+                        GenerateSettings(Changelog = Workspace.``valid_no_version_old_metadata.md``)
+
+                    Changelog.tryLoad settings
 
                 match actual with
                 | Ok actual ->
@@ -497,7 +525,7 @@ let private updateChangelogWithNewVersionTests =
                         let settings =
                             GenerateSettings(Changelog = Workspace.``valid_changelog.md``)
 
-                        match Changelog.load settings with
+                        match Changelog.tryLoad settings with
                         | Ok changelogInfo -> changelogInfo
                         | Error _ -> failwith "Expected Ok"
 
@@ -548,7 +576,7 @@ let private updateChangelogWithNewVersionTests =
                                 Changelog = Workspace.``valid_changelog_no_metadata.md``
                             )
 
-                        match Changelog.load settings with
+                        match Changelog.tryLoad settings with
                         | Ok changelogInfo -> changelogInfo
                         | Error _ -> failwith "Expected Ok"
 

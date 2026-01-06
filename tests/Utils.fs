@@ -18,12 +18,36 @@ module Expect =
 
 type Git.Commit with
 
+    /// <summary>
+    /// Creates a Git.Commit instance for testing purposes.
+    ///
+    /// <remarks>
+    /// By default, a <c>src/Main.fs</c> file is included in the commit,
+    /// the author is set to "Kaladin Stormblessed", and the long message
+    /// is set to the short message followed by a newline.
+    /// </remarks>
+    /// </summary>
+    /// <param name="hash">Hash of the commit.</param>
+    /// <param name="shortMessage">Short message of the commit.</param>
+    /// <param name="longMessage">Optional long message of the commit.</param>
+    /// <param name="author">Optional author of the commit.</param>
+    /// <param name="files">Optional list of files changed in the commit.</param>
+    /// <returns>
+    /// A Git.Commit instance with the specified properties.
+    /// </returns>
     static member Create
-        (hash: string, shortMessage: string, ?longMessage: string, ?author: string)
+        (
+            hash: string,
+            shortMessage: string,
+            ?longMessage: string,
+            ?author: string,
+            ?files: string list
+        )
         : Git.Commit
         =
         let author = defaultArg author "Kaladin Stormblessed"
         let longMessage = defaultArg longMessage (shortMessage + "\n")
+        let files = defaultArg files [ "src/Main.fs" ]
 
         {
             Hash = hash
@@ -31,6 +55,7 @@ type Git.Commit with
             Author = author
             ShortMessage = shortMessage
             RawBody = longMessage
+            Files = files
         }
 
 open VerifyTests
@@ -64,7 +89,7 @@ let inline verify (name: string) (value: string) =
 
     let settings = VerifySettings()
     settings.UseDirectory(Workspace.``..``.VerifyTests.``.``)
-    Verifier.Verify(name, value, settings, "dwdw").ToTask()
+    Verifier.Verify(name, value, settings).ToTask()
 
 type Verify =
 
@@ -78,6 +103,7 @@ type Verify =
         =
         let settings = VerifySettings()
         settings.UseDirectory(Workspace.``..``.VerifyTests.``.``)
+        registerDiffTool ()
 
         Verifier.Verify(name, value, "md", settings, callerFilePath).ToTask()
 
