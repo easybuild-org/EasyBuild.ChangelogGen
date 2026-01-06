@@ -29,7 +29,7 @@ Learn more at https://github.com/easybuild-org/EasyBuild.ChangelogGen"
         )
         .Configure(fun config ->
             config.Settings.ApplicationName <- "changelog-gen"
-            config.SetHelpProvider(CustomHelperProvider(config.Settings))
+            config.SetHelpProvider(CustomHelperProvider(config.Settings)) |> ignore
             config.AddCommand<VersionCommand>("version") |> ignore
         )
 

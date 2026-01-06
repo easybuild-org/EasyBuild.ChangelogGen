@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    "net8.0": {
+    "net10.0": {
       "BlackFox.CommandLine": {
         "type": "Direct",
         "requested": "[1.0.0, )",
@@ -13,72 +13,60 @@
       },
       "EasyBuild.FileSystemProvider": {
         "type": "Direct",
-        "requested": "[0.3.0, )",
-        "resolved": "0.3.0",
-        "contentHash": "gdVJpqcMDJm4IfmITy3MtpEn/lo9pH8PirVlENtXGX9Sdw3rCgoo9ch1TAthUseh28RcUGWwza9BmEWlrQX/Aw=="
+        "requested": "[1.1.0, )",
+        "resolved": "1.1.0",
+        "contentHash": "O+/pVoGDLO6zzwacz/Ayi5DkOaGLOVfPMAe3EGjOda8D0RRgc23gbbH9bYONIHB7hb07Rc4tg4F4Da6GmlKqHQ=="
       },
       "EasyBuild.Tools": {
         "type": "Direct",
-        "requested": "[3.1.0, )",
-        "resolved": "3.1.0",
-        "contentHash": "q+4ESny4CyHfoQ1zL0l/pfWereKxlzB/Lbcx2b5BWZi7OUbErIKRS1yMGMNho4cMqG8p6jj55HTsCvE1jDhKDg==",
+        "requested": "[5.0.1, )",
+        "resolved": "5.0.1",
+        "contentHash": "m3y6ni3a+Z39UWcRkdh5naRYuSNz1ZYj7ASeg3weJV3M/ofqIOCfJBb0a0J1YiAW7jfczo0YoDVzHRXz5JAAsw==",
         "dependencies": {
           "BlackFox.CommandLine": "1.0.0",
           "FSharp.Core": "6.0.0",
-          "SimpleExec": "12.0.0",
-          "System.Text.Json": "9.0.0"
+          "SimpleExec": "12.0.0"
         }
       },
       "FSharp.Core": {
         "type": "Direct",
-        "requested": "[8.0.200, )",
-        "resolved": "8.0.200",
-        "contentHash": "qnxoF3Fu0HzfOeYdrwmQOsLP1v+OtOMSIYkNVUwf6nGqWzL03Hh4r6VFCvCb54jlsgtt3WADVYkKkrgdeY5kiQ=="
+        "requested": "[10.0.101, )",
+        "resolved": "10.0.101",
+        "contentHash": "mrS3J7cLtvXM3u3CmiaFq8oyBdlevzZY1VAAAbFk1gUDQtDEjUOybN5XpQglx5wAgJ0wLdDl6OSSfS7ZDFNcpA=="
       },
       "Semver": {
         "type": "Direct",
-        "requested": "[2.3.0, )",
-        "resolved": "2.3.0",
-        "contentHash": "4vYo1zqn6pJ1YrhjuhuOSbIIm0CpM47grbpTJ5ABjOlfGt/EhMEM9ed4MRK5Jr6gVnntWDqOUzGeUJp68PZGjw=="
+        "requested": "[3.0.0, )",
+        "resolved": "3.0.0",
+        "contentHash": "9jZCicsVgTebqkAujRWtC9J1A5EQVlu0TVKHcgoCuv345ve5DYf4D1MjhKEnQjdRZo6x/vdv6QQrYFs7ilGzLA==",
+        "dependencies": {
+          "Microsoft.Extensions.Primitives": "5.0.1"
+        }
       },
       "SimpleExec": {
         "type": "Direct",
-        "requested": "[12.0.0, )",
-        "resolved": "12.0.0",
-        "contentHash": "ptxlWtxC8vM6Y6e3h9ZTxBBkOWnWrm/Sa1HT+2i1xcXY3Hx2hmKDZP5RShPf8Xr9D+ivlrXNy57ktzyH8kyt+Q=="
+        "requested": "[13.0.0, )",
+        "resolved": "13.0.0",
+        "contentHash": "zcCR1pupa1wI1VqBULRiQKeHKKZOuJhi/K+4V5oO+rHJZlaOD53ViFo1c3PavDoMAfSn/FAXGAWpPoF57rwhYg=="
       },
       "Spectre.Console.Cli": {
         "type": "Direct",
-        "requested": "[0.49.0, )",
-        "resolved": "0.49.0",
-        "contentHash": "841g7PhuJFwoCatKKVoIRDaylmcaTxEzTzq7+rGHyVCBUqL7iOH0c5AsGnjgBMzhRDnUUWkP47Ho9WWfqMVqAA==",
+        "requested": "[0.53.1, )",
+        "resolved": "0.53.1",
+        "contentHash": "y//7ZZ0shhvgXzoJXJzMaLGA4dPem8qCbkyv9khfE8NQDlH4hPVsHOHYoz6uzAwiTX9Yd7OnX3wNOX/wRfPUOg==",
         "dependencies": {
-          "Spectre.Console": "0.49.0"
+          "Spectre.Console": "0.53.1"
         }
+      },
+      "Microsoft.Extensions.Primitives": {
+        "type": "Transitive",
+        "resolved": "5.0.1",
+        "contentHash": "5WPSmL4YeP7eW+Vc8XZ4DwjYWBAiSwDV9Hm63JJWcz1Ie3Xjv4KuJXzgCstj48LkLfVCYa7mLcx7y+q6yqVvtw=="
       },
       "Spectre.Console": {
         "type": "Transitive",
-        "resolved": "0.49.0",
-        "contentHash": "1s+hhYq5fcrqCvZhrNOPehAmCZJM6cjro85g1Qirvmm1tys+/sfFJgePCGcxr+S/nONZ/lCDTflPda3C+WlBdg=="
-      },
-      "System.IO.Pipelines": {
-        "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "eA3cinogwaNB4jdjQHOP3Z3EuyiDII7MT35jgtnsA4vkn0LUrrSHsU0nzHTzFzmaFYeKV7MYyMxOocFzsBHpTw=="
-      },
-      "System.Text.Encodings.Web": {
-        "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "e2hMgAErLbKyUUwt18qSBf9T5Y+SFAL3ZedM8fLupkVj8Rj2PZ9oxQ37XX2LF8fTO1wNIxvKpihD7Of7D/NxZw=="
-      },
-      "System.Text.Json": {
-        "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "js7+qAu/9mQvnhA4EfGMZNEzXtJCDxgkgj8ohuxq/Qxv+R56G+ljefhiJHOxTNiw54q8vmABCWUwkMulNdlZ4A==",
-        "dependencies": {
-          "System.IO.Pipelines": "9.0.0",
-          "System.Text.Encodings.Web": "9.0.0"
-        }
+        "resolved": "0.53.1",
+        "contentHash": "wNLoytZpc7brgH3V9ZmrRyQqplOQUnNkEu1qSjRnEa0KOGvWAxgdEG6jmFTfyXKzO7p1pTLBHYH+AgxsWi69Cg=="
       }
     }
   }

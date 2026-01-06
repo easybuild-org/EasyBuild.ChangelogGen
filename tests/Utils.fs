@@ -116,3 +116,12 @@ type TestHelper =
         )
         =
         testTask name { do! Verify.Markdown(name, func (), callerFilePath) }
+
+    static member ftestMarkdown
+        (
+            name: string,
+            func: unit -> string,
+            [<CallerFilePath; Optional; DefaultParameterValue("")>] callerFilePath: string
+        )
+        =
+        ftestTask name { do! Verify.Markdown(name, func (), callerFilePath) }

@@ -12,7 +12,7 @@ type GenerateCommand() =
 
     interface ICommandLimiter<GenerateSettings>
 
-    override __.Execute(context, settings) =
+    override __.Execute(_, settings, _) =
         let res =
             result {
                 let! config = ConfigLoader.tryLoadConfig settings.Config

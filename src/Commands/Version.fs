@@ -10,7 +10,7 @@ type VersionCommand() =
     inherit Command<VersionSettings>()
     interface ICommandLimiter<VersionSettings>
 
-    override __.Execute(_, _) =
+    override __.Execute(_, _, _) =
         let assembly = Assembly.GetEntryAssembly()
 
         let versionAttribute =

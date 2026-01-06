@@ -17,8 +17,8 @@ type ReleaseCommand() =
     inherit Command<ReleaseSettings>()
     interface ICommandLimiter<ReleaseSettings>
 
-    override __.Execute(context, settings) =
-        TestCommand().Execute(context, TestSettings()) |> ignore
+    override __.Execute(context, _settings, ct) =
+        TestCommand().Execute(context, TestSettings(), ct) |> ignore
 
         // Clean up the src/bin folder
         if Directory.Exists VirtualWorkspace.src.bin.``.`` then

@@ -15,7 +15,7 @@ type TestCommand() =
     inherit Command<TestSettings>()
     interface ICommandLimiter<TestSettings>
 
-    override __.Execute(context, settings) =
+    override __.Execute(_, settings, _) =
         if settings.IsWatch then
             Command.Run(
                 "dotnet",

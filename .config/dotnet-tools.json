@@ -6,19 +6,29 @@
       "version": "6.3.4",
       "commands": [
         "fantomas"
-      ]
+      ],
+      "rollForward": false
     },
     "husky": {
       "version": "0.6.4",
       "commands": [
         "husky"
-      ]
+      ],
+      "rollForward": false
     },
     "easybuild.commitlinter": {
       "version": "1.0.0",
       "commands": [
         "commit-linter"
-      ]
+      ],
+      "rollForward": false
+    },
+    "dotnet-outdated-tool": {
+      "version": "4.6.9",
+      "commands": [
+        "dotnet-outdated"
+      ],
+      "rollForward": false
     }
   }
 }

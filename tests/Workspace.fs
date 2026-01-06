@@ -2,4 +2,4 @@ module Workspace
 
 open EasyBuild.FileSystemProvider
 
-type Workspace = RelativeFileSystem<"./fixtures">
+type Workspace = AbsoluteFileSystem<"./fixtures">

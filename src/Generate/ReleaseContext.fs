@@ -75,19 +75,19 @@ let computeVersion
 
         let bumpMajor () =
             refVersion
-                .WithMajor(refVersion.Major + 1)
+                .WithMajor(refVersion.Major + 1I)
                 .WithMinor(0)
                 .WithPatch(0)
                 .WithoutPrereleaseOrMetadata()
 
         let bumpMinor () =
             refVersion
-                .WithMinor(refVersion.Minor + 1)
+                .WithMinor(refVersion.Minor + 1I)
                 .WithPatch(0)
                 .WithoutPrereleaseOrMetadata()
 
         let bumpPatch () =
-            refVersion.WithPatch(refVersion.Patch + 1).WithoutPrereleaseOrMetadata()
+            refVersion.WithPatch(refVersion.Patch + 1I).WithoutPrereleaseOrMetadata()
 
         // If the last version is a release, and user requested a pre-release
         // Then we compute the standard release version and add the pre-release identifier starting from 1
