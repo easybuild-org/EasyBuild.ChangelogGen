@@ -6,6 +6,9 @@
 
 Tool for generating changelog based on Git history based on [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). It is using [EasyBuild.CommitParser](https://github.com/easybuild-org/EasyBuild.CommitParser) to parse commit messages check their documentation for more information about configuration.
 
+> [!WARNING]
+> EasyBuild.ChangelogGen is deprecated in favor of [EasyBuild.ShipIt](https://github.com/easybuild-org/EasyBuild.ShipIt) which allows to automate the full release process instead of just the Changelog generation
+
 ## Usage
 
 ```bash
